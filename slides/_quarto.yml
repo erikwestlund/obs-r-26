@@ -8,6 +8,7 @@ project:
 format:
   revealjs:
     theme: default
+    embed-resources: true
     incremental: false
     slide-number: true
     transition: slide
