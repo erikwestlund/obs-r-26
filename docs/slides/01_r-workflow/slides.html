@@ -1103,6 +1103,59 @@ Operating System (Windows, macOS, Linux)</code></pre>
 <p>Both <code>x</code> and <code>f</code> are objects. They live in your environment.</p>
 <p>Even functions are objects. Even environments are objects.</p>
 </section>
+<section id="assignment---vs" class="slide level2 center">
+<h2>Assignment: <code>&lt;-</code> vs <code>=</code></h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href></a>x <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1</span>, <span class="dv">2</span>, <span class="dv">3</span>)</span>
+<span id="cb3-2"><a href></a><span class="fu">mean</span>(<span class="at">x =</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>))</span>
+<span id="cb3-3"><a href></a>x  <span class="co"># still c(1, 2, 3)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href></a><span class="fu">mean</span>(x <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">4</span>, <span class="dv">5</span>, <span class="dv">6</span>))</span>
+<span id="cb4-2"><a href></a>x  <span class="co"># now c(4, 5, 6)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>=</code> inside a function call sets a <strong>parameter</strong>.</p>
+<p><code>&lt;-</code> always <strong>assigns to an environment</strong>.</p>
+</section>
+<section id="scope" class="slide level2 center">
+<h2>Scope</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href></a>x <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb5-2"><a href></a></span>
+<span id="cb5-3"><a href></a>add_to_self <span class="ot">&lt;-</span> <span class="cf">function</span>(y) {</span>
+<span id="cb5-4"><a href></a>  x <span class="ot">&lt;-</span> y</span>
+<span id="cb5-5"><a href></a>  y <span class="sc">+</span> y</span>
+<span id="cb5-6"><a href></a>}</span>
+<span id="cb5-7"><a href></a></span>
+<span id="cb5-8"><a href></a><span class="fu">add_to_self</span>(<span class="dv">3</span>)  <span class="co"># returns 6</span></span>
+<span id="cb5-9"><a href></a>x               <span class="co"># still 1</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Why isn’t <code>x</code> now 3?</p>
+</section>
+<section id="environments" class="slide level2 center">
+<h2>Environments</h2>
+<ul>
+<li>The <strong>global environment</strong> is where your top-level objects live</li>
+<li>When you call a function, R creates a <strong>new environment</strong> for it</li>
+<li>Assignments inside a function stay in that function’s environment</li>
+<li>When the function returns, its environment is destroyed</li>
+</ul>
+</section>
+<section id="why-this-matters" class="slide level2 center">
+<h2>Why This Matters</h2>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href></a><span class="co"># This won&#39;t affect your data</span></span>
+<span id="cb6-2"><a href></a>clean_data <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb6-3"><a href></a>  df <span class="ot">&lt;-</span> df <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(value))</span>
+<span id="cb6-4"><a href></a>  df</span>
+<span id="cb6-5"><a href></a>}</span>
+<span id="cb6-6"><a href></a></span>
+<span id="cb6-7"><a href></a>my_data <span class="ot">&lt;-</span> <span class="fu">clean_data</span>(my_data)  <span class="co"># must reassign!</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Functions don’t modify objects in place by default. You must capture the return value.</p>
+</section>
+<section id="why-functions-matter" class="slide level2 center">
+<h2>Why Functions Matter</h2>
+<p>Functions encapsulate code and variables into a private scope.</p>
+<ul>
+<li>Variables inside don’t leak out</li>
+<li>Safe to experiment</li>
+<li>Return values are explicit</li>
+</ul>
+<p>R packages are just bundles of functions.</p>
+</section>
 <section id="packages" class="slide level2 center">
 <h2>Packages</h2>
 <p>A package is a bundle of:</p>
@@ -1146,16 +1199,16 @@ Operating System (Windows, macOS, Linux)</code></pre>
 <section id="where-packages-live" class="slide level2 center">
 <h2>Where Packages Live</h2>
 <p>Packages are just <strong>folders</strong> on your disk.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href></a><span class="fu">.libPaths</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href></a><span class="fu">.libPaths</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Shows you where R looks for packages.</p>
 <p>When you <code>install.packages()</code>, it downloads and extracts to one of these folders.</p>
 </section>
 <section id="installing-vs-loading" class="slide level2 center">
 <h2>Installing vs Loading</h2>
 <p><strong>Installing</strong> = download to disk (once)</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href></a><span class="fu">install.packages</span>(<span class="st">&quot;dplyr&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href></a><span class="fu">install.packages</span>(<span class="st">&quot;dplyr&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p><strong>Loading</strong> = make available in session (every time)</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href></a><span class="fu">library</span>(dplyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href></a><span class="fu">library</span>(dplyr)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="git-and-github" class="slide level2 center">
 <h2>Git and GitHub</h2>
@@ -1192,7 +1245,7 @@ Operating System (Windows, macOS, Linux)</code></pre>
 <li>Managed by R</li>
 </ul>
 </section>
-<section id="why-this-matters" class="slide level2 center">
+<section id="why-this-matters-1" class="slide level2 center">
 <h2>Why This Matters</h2>
 <p>Your code works on your laptop.</p>
 <p>Your collaborator runs it. It breaks.</p>
@@ -1211,9 +1264,9 @@ Operating System (Windows, macOS, Linux)</code></pre>
 <li>Records exact versions in <code>renv.lock</code></li>
 <li>Collaborators can recreate your environment exactly</li>
 </ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href></a>renv<span class="sc">::</span><span class="fu">init</span>()</span>
-<span id="cb6-2"><a href></a>renv<span class="sc">::</span><span class="fu">snapshot</span>()</span>
-<span id="cb6-3"><a href></a>renv<span class="sc">::</span><span class="fu">restore</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href></a>renv<span class="sc">::</span><span class="fu">init</span>()</span>
+<span id="cb10-2"><a href></a>renv<span class="sc">::</span><span class="fu">snapshot</span>()</span>
+<span id="cb10-3"><a href></a>renv<span class="sc">::</span><span class="fu">restore</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </section>
 <section id="databases" class="slide level2 center">
 <h2>Databases</h2>

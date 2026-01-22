@@ -55,6 +55,70 @@ Both `x` and `f` are objects. They live in your environment.
 
 Even functions are objects. Even environments are objects.
 
+## Assignment: `<-` vs `=`
+
+```r
+x <- c(1, 2, 3)
+mean(x = c(4, 5, 6))
+x  # still c(1, 2, 3)
+```
+
+```r
+mean(x <- c(4, 5, 6))
+x  # now c(4, 5, 6)
+```
+
+`=` inside a function call sets a **parameter**.
+
+`<-` always **assigns to an environment**.
+
+## Scope
+
+```r
+x <- 1
+
+add_to_self <- function(y) {
+  x <- y
+  y + y
+}
+
+add_to_self(3)  # returns 6
+x               # still 1
+```
+
+Why isn't `x` now 3?
+
+## Environments
+
+- The **global environment** is where your top-level objects live
+- When you call a function, R creates a **new environment** for it
+- Assignments inside a function stay in that function's environment
+- When the function returns, its environment is destroyed
+
+## Why This Matters
+
+```r
+# This won't affect your data
+clean_data <- function(df) {
+  df <- df |> filter(!is.na(value))
+  df
+}
+
+my_data <- clean_data(my_data)  # must reassign!
+```
+
+Functions don't modify objects in place by default. You must capture the return value.
+
+## Why Functions Matter
+
+Functions encapsulate code and variables into a private scope.
+
+- Variables inside don't leak out
+- Safe to experiment
+- Return values are explicit
+
+R packages are just bundles of functions.
+
 ## Packages
 
 A package is a bundle of:
