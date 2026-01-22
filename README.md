@@ -6,9 +6,14 @@ Course materials for working with the OHDSI/HADES ecosystem.
 
 ## Sessions
 
-1. **The R Workflow** - Environment, dependencies, and data foundations
-   - [Slides](https://ohdsi-jhu.github.io/ME.250.788.SP26/slides/01_r-workflow/slides.html)
-   - [Notebook](https://ohdsi-jhu.github.io/ME.250.788.SP26/modules/01_r-workflow/r-foundations.html)
+### 1. The R Workflow
+
+Environment, dependencies, and data foundations.
+
+| Material | Rendered | Source |
+|----------|----------|--------|
+| Slides | [View](https://ohdsi-jhu.github.io/ME.250.788.SP26/slides/01_r-workflow/slides.html) | [Code](slides/01_r-workflow/slides.qmd) |
+| Notebook | [View](https://ohdsi-jhu.github.io/ME.250.788.SP26/modules/01_r-workflow/r-foundations.html) | [Code](modules/01_r-workflow/r-foundations.qmd) |
 
 ## Other Topics
 
