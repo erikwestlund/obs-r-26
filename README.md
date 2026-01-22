@@ -17,7 +17,7 @@ docs/            # Rendered site (GitHub Pages)
 
 ## Other Topics
 
-* Cohorts &ampm; Cohort Diagnostics
+* Cohorts &amp; Cohort Diagnostics
 * Characterization
 * CohortMethod: Population Level Effect Estimation
 * Strategus
