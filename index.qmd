@@ -10,7 +10,7 @@ format:
 
 ## Course Overview
 
-This course covers observational research methods using R with the OHDSI/HADES ecosystem. Over eight sessions, you'll learn to work with the OMOP Common Data Model, run standardized analyses, and use Strategus to orchestrate studies.
+This course covers observational research methods using R with the OHDSI/HADES ecosystem.
 
 ## Sessions
 
@@ -21,57 +21,14 @@ Environment, dependencies, and data foundations.
 - [Slides](slides/01_r-workflow/slides.html)
 - [Notebook: R Foundations](modules/01_r-workflow/r-foundations.html)
 
-**Topics covered:**
+## Other Topics
 
-- R as an interpreter, sessions, environments
-- Packages: installation, loading, library paths
-- Git and GitHub, Personal Access Tokens
-- System vs R dependencies, Java setup
-- renv for reproducibility
-- Introduction to databases
+- Cohorts and Cohort Diagnostics
+- Characterization
+- CohortMethod: Population Level Effect Estimation
+- Strategus
 
----
-
-### Session 2: OMOP and the Common Data Model
-
-*Coming soon*
-
----
-
-### Session 3: Cohort Building
-
-*Coming soon*
-
----
-
-### Session 4: Cohort Diagnostics
-
-*Coming soon*
-
----
-
-### Session 5: Characterization
-
-*Coming soon*
-
----
-
-### Session 6: Population-Level Estimation
-
-*Coming soon*
-
----
-
-### Session 7: Patient-Level Prediction
-
-*Coming soon*
-
----
-### Session 8: Strategus and Putting It All Together
-
-*Coming soon*
-
----
+(This will be built out as the course progresses.)
 
 ## Resources
 
