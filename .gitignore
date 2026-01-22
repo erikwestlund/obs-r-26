@@ -132,3 +132,13 @@ ehthumbs.db
 *.bak
 *.swp
 *~
+
+# ============================================================================
+# PROJECT-SPECIFIC
+# ============================================================================
+
+# Course brainstorming (local only)
+brainstorming/
+
+/.quarto/
+**/*.quarto_ipynb

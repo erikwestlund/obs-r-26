@@ -3,7 +3,7 @@
 # To regenerate: Use GUI 'Regenerate Quarto Configs' button (WARNING: overwrites!)
 
 project:
-  output-dir: ../rendered/slides
+  output-dir: ../docs/slides
 
 format:
   revealjs:

@@ -1,0 +1,617 @@
+---
+title: "Module 01: The R Workflow"
+subtitle: "Environment, Dependencies, and Data Foundations"
+---
+
+```{r}
+#| include: false
+# We're not using scaffold() here since this is a teaching module
+# about the fundamentals that scaffold() abstracts away
+```
+
+## Agenda
+
+**Session 1** 
+
+| Block | Topic | Format |
+|-------|-------|--------|
+| 1 | Environment check | Interactive |
+| 2 | How R works | Discussion + exploration |
+| 3 | Packages and where they live | Hands-on |
+| 4 | Git and GitHub | Discussion + practice |
+| 5 | Dependencies: system vs R | Discussion |
+| 6 | renv for reproducibility | Hands-on |
+| 7 | Data and databases (if time) | Demo |
+
+**Steps completed:**
+
+- [ ] R installed
+- [ ] RStudio or Positron installed
+- [ ] Git installed
+- [ ] GitHub account created
+- [ ] Quarto installed
+
+---
+
+## 1. Environment Check
+
+Let's verify everyone has a working setup.
+
+### Is R installed?
+
+```{r}
+#| eval: false
+R.version.string
+```
+
+You should see something like `R version 4.x.x`.
+
+**What is this actually telling us?** R is a program---a binary executable---installed somewhere on your computer. When you type `R` in a terminal or open RStudio, you're launching that program.
+
+### Where is R?
+
+```{r}
+#| eval: false
+# The R binary location
+R.home()
+
+# On Unix-like systems, you can also check from terminal:
+# which R
+```
+
+### Is Git installed?
+
+```{r}
+#| eval: false
+system("git --version", intern = TRUE)
+```
+
+If this errors, Git isn't installed or isn't on your PATH.
+
+### Is Quarto installed?
+
+```{r}
+#| eval: false
+system("quarto --version", intern = TRUE)
+```
+
+---
+
+## 2. How R Works
+
+If you're using RStudio, you'll see something like this:
+
+![The RStudio IDE](images/rstudio.png)
+
+### R is an interpreter
+
+When you type code at the console, R:
+
+1. **Reads** your input
+2. **Evaluates** it
+3. **Prints** the result
+4. **Loops** back waiting for more
+
+This is called a **REPL** (Read-Eval-Print Loop).
+
+```{r}
+#| eval: false
+# Try this in your console:
+2 + 2
+```
+
+![The R console](images/console.png)
+
+There's no compilation step. R interprets your code line by line.
+
+### The R session
+
+When R starts, it creates a **session**---a running instance of the R interpreter with:
+
+- A **global environment** (where your objects live)
+- A **working directory** (where R looks for files by default)
+- Loaded **packages** (base R plus whatever you load)
+
+```{r}
+#| eval: false
+# Your current working directory
+getwd()
+
+# Your global environment (probably empty if you just started)
+ls()
+
+# What packages are currently loaded?
+search()
+```
+
+### Everything is an object
+
+In R, everything you create is an **object** stored in an environment:
+
+```{r}
+#| eval: false
+x <- 42
+f <- function(a) a + 1
+
+# Both are objects
+class(x)
+class(f)
+
+# Both live in your global environment
+ls()
+```
+
+The Environment pane shows all objects in your session:
+
+::: {layout-ncol=2}
+![RStudio](images/environment-with-f.png)
+
+![Positron](images/environment-positron.png)
+:::
+
+---
+
+## 3. Packages and Where They Live
+
+### What is a package?
+
+A package is a bundle of:
+
+- Functions
+- Documentation
+- Possibly data
+- Metadata (who wrote it, what it depends on)
+
+### Where do packages come from?
+
+| Source | Examples | Install command |
+|--------|----------|-----------------|
+| CRAN | dplyr, ggplot2 | `install.packages("dplyr")` |
+| Bioconductor | DESeq2, GenomicRanges | `BiocManager::install("DESeq2")` |
+| GitHub | Most OHDSI/HADES packages | `remotes::install_github("OHDSI/CohortMethod")` |
+
+### Where do packages live on your computer?
+
+This is important to understand:
+
+```{r}
+#| eval: false
+# R searches these directories for packages, in order
+.libPaths()
+```
+
+You'll likely see:
+
+1. A **user library** (packages you install)
+2. A **system library** (packages that came with R)
+
+### Let's explore
+
+```{r}
+#| eval: false
+# Pick the first library path
+lib_path <- .libPaths()[1]
+
+# What's in there?
+list.dirs(lib_path, recursive = FALSE) |> head(20)
+```
+
+Each subdirectory is an installed package. A package is literally just a folder with a specific structure.
+
+### Installing a package
+
+```{r}
+#| eval: false
+# This downloads the package and puts it in your user library
+install.packages("RSQLite")
+
+# Now it exists on disk
+file.exists(file.path(.libPaths()[1], "RSQLite"))
+```
+
+### Loading vs installing
+
+**Installing** = downloading and saving to disk (do once)
+
+**Loading** = making functions available in your session (do each session)
+
+```{r}
+#| eval: false
+# Load a package
+library(RSQLite)
+
+# Now its functions are available
+# Check what's loaded
+search()
+```
+
+---
+
+## 4. Git and GitHub
+
+### What is Git?
+
+Git is **version control software**. It tracks changes to files over time.
+
+Think of it as:
+
+- Unlimited undo history
+- The ability to work on multiple versions simultaneously (branches)
+- A way to merge work from multiple people
+
+Git runs **locally** on your computer.
+
+### What is GitHub?
+
+GitHub is a **platform** that hosts Git repositories online. It adds:
+
+- Backup (your code lives in the cloud)
+- Collaboration (others can see, fork, contribute)
+- Issue tracking, pull requests, CI/CD
+
+**Git ≠ GitHub**. You can use Git without GitHub. But most open source projects (including OHDSI) use GitHub.
+
+### Why does this matter for OHDSI?
+
+Almost all HADES packages are hosted on GitHub:
+
+![OHDSI on GitHub](images/github.png)
+
+- <https://github.com/OHDSI/CohortMethod>
+- <https://github.com/OHDSI/CohortDiagnostics>
+- <https://github.com/OHDSI/Strategus>
+
+To install them, you need to pull from GitHub. To contribute, you need to understand Git.
+
+### Basic Git workflow
+
+```bash
+# Clone a repository (download it)
+git clone https://github.com/OHDSI-JHU/some-repo.git
+
+# Check status (what's changed?)
+git status
+
+# Stage changes (mark files to be committed)
+git add filename.R
+
+# Commit (save a snapshot with a message)
+git commit -m "Add analysis script"
+
+# Push (upload to GitHub)
+git push
+
+# Pull (download latest changes from GitHub)
+git pull
+```
+
+### Exercise: Verify Git works
+
+```bash
+# In your terminal (not R console):
+git --version
+
+# Configure your identity (if you haven't)
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+```
+
+### GitHub Personal Access Token
+
+Installing HADES packages requires downloads from GitHub. GitHub caps how many downloads an anonymous user can make in a short time, and this cap is reached when trying to download all HADES packages.
+
+To avoid this, we authenticate using a **Personal Access Token (PAT)**. A known GitHub user has a much higher download cap. You only need to do this once---after you set your PAT, it persists across R sessions.
+
+**Step 1: Create a PAT**
+
+First, make sure you have a GitHub account ([github.com](https://github.com)).
+
+Then run this in R to open a browser where you can generate a PAT:
+
+```{r}
+#| eval: false
+install.packages("usethis")
+library(usethis)
+create_github_token(scopes = c("(no scope)"), description = "R:GITHUB_PAT", host = "https://github.com")
+```
+
+You may need to log in to GitHub. The PAT does not require any permissions, so leave all checkboxes unchecked. Click "Generate token" and **copy your PAT immediately**---you won't see it again.
+
+**Step 2: Add the PAT to R**
+
+Open your `.Renviron` file:
+
+```{r}
+#| eval: false
+usethis::edit_r_environ()
+```
+
+Add this line (using your actual PAT):
+
+```
+GITHUB_PAT = 'a1b2c3d4e5f6g7h8g9h0ijklmnopqrstuvwxyz'
+```
+
+Save the file and **restart R**. The PAT is now available to R functions that interact with GitHub.
+
+---
+
+## 5. Dependencies
+
+### Two kinds of dependencies
+
+When you run R code, you depend on things being installed. There are two levels:
+
+**System dependencies**: Software that must be installed on your operating system
+
+- R itself
+- Java (required by many OHDSI packages via JDBC)
+- Compilers (for packages with C/C++ code)
+- Database drivers
+
+**R package dependencies**: Other R packages your code needs
+
+- Direct dependencies (packages you call)
+- Transitive dependencies (packages your dependencies need)
+
+### System dependencies vary by platform
+
+| Dependency | Windows | macOS | Linux |
+|------------|---------|-------|-------|
+| R | Installer from CRAN | Installer from CRAN | Package manager or source |
+| Java | Amazon Corretto | Amazon Corretto | `apt install openjdk-17-jdk` |
+| Compilers | Rtools | Xcode CLI tools | build-essential |
+
+This is why the same R code can work on your laptop but fail on a server---different system dependencies.
+
+### Java and OHDSI
+
+Many HADES packages use **JDBC** (Java Database Connectivity) to connect to databases. This requires:
+
+1. Java installed on your system
+2. The `JAVA_HOME` environment variable set correctly
+3. JDBC driver files for your database
+
+See the [OHDSI R Setup guide](https://ohdsi.github.io/Hades/rSetup.html) for full details.
+
+**Windows**: Download [Amazon Corretto 8](https://docs.aws.amazon.com/corretto/latest/corretto-8-ug/downloads-list.html) (64-bit JDK installer). Run the MSI installer.
+
+**Mac**: Download [Amazon Corretto 11](https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html). For Apple Silicon (M1/M2/M3), choose the **macOS aarch64** package. Then run:
+
+```bash
+# Tell R where Java is
+R CMD javareconf
+```
+
+**Both platforms**: Add this to your `.Renviron` file to increase heap space:
+
+```
+_JAVA_OPTIONS='-Xmx4g'
+```
+
+```{r}
+#| eval: false
+# Check if R can find Java
+system("java -version", intern = TRUE)
+
+# Check JAVA_HOME
+Sys.getenv("JAVA_HOME")
+```
+
+### A note on platforms: Databricks, cloud, HPC
+
+In enterprise/research settings, you may run R on:
+
+- **Databricks** - cloud platform with Spark integration
+- **Cloud VMs** - AWS, Azure, GCP instances
+- **HPC clusters** - shared computing resources
+
+These environments have their own system dependencies pre-installed (or not). Understanding the dependency model helps you debug when things don't work.
+
+### Environment variables
+
+System configuration often lives in **environment variables**:
+
+```{r}
+#| eval: false
+# See all environment variables
+Sys.getenv() |> head(20)
+
+# Specific ones that matter for OHDSI
+Sys.getenv("JAVA_HOME")
+Sys.getenv("PATH")
+```
+
+In R, you can set these in:
+
+- `.Renviron` file (R-specific, loaded on startup)
+- `.env` file (project-specific, loaded by packages like `dotenv`)
+- System settings (affects all programs)
+
+---
+
+## 6. renv for Reproducibility
+
+### The problem
+
+You write code that works. A year later (or on a colleague's machine), it breaks. Why?
+
+- Package X updated and changed behavior
+- Package Y was removed from CRAN
+- A dependency conflict emerged
+
+### The solution: renv
+
+`renv` creates **isolated, reproducible package environments** per project.
+
+How it works:
+
+1. Each project gets its own package library
+2. A `renv.lock` file records exact package versions
+3. Anyone can recreate the exact environment from the lock file
+
+### Setting up renv
+
+```{r}
+#| eval: false
+# Initialize renv in a project
+renv::init()
+
+# This creates:
+# - renv/ folder (project library)
+# - renv.lock (version snapshot)
+# - .Rprofile (activates renv on startup)
+```
+
+### The renv workflow
+
+```{r}
+#| eval: false
+# Install packages as normal
+install.packages("dplyr")
+renv::install("OHDSI/CohortMethod")
+
+# Snapshot your current state
+renv::snapshot()
+
+# Share renv.lock via git
+# Collaborator restores exact versions:
+renv::restore()
+```
+
+### Why this matters for OHDSI
+
+HADES packages evolve rapidly. An analysis that worked with CohortMethod 4.2.0 might behave differently with 5.0.0.
+
+For reproducible research:
+
+1. Use renv in every project
+2. Commit `renv.lock` to git
+3. Document which versions you used
+
+---
+
+## 7. Data and Databases
+
+*Time permitting---we'll revisit this in depth later*
+
+### Data in R
+
+R holds data in memory as objects:
+
+```{r}
+#| eval: false
+# A data frame in memory
+df <- data.frame(
+  id = 1:3,
+  name = c("Alice", "Bob", "Carol")
+)
+
+# How much memory?
+object.size(df)
+```
+
+For small data, this is fine. For healthcare data with millions of rows, you need databases.
+
+### What is a database?
+
+A database is:
+
+- Persistent storage (survives R session ending)
+- Optimized for queries (fast filtering, joining)
+- Can handle data larger than memory
+- Supports concurrent access (multiple users)
+
+![A database viewed in a GUI tool](images/database-ide.png)
+
+### SQLite: The simplest database
+
+SQLite is a database in a single file. No server needed.
+
+```{r}
+#| eval: false
+library(RSQLite)
+
+# Create a connection to a new database file
+con <- dbConnect(SQLite(), "my_database.sqlite")
+
+# Write a data frame to the database
+dbWriteTable(con, "people", df)
+
+# Query it back
+dbGetQuery(con, "SELECT * FROM people WHERE id > 1")
+
+# Clean up
+dbDisconnect(con)
+```
+
+### Why OHDSI uses DatabaseConnector
+
+Real OMOP databases run on PostgreSQL, SQL Server, Oracle, Redshift, etc. Each has slightly different SQL syntax.
+
+OHDSI's `DatabaseConnector` + `SqlRender`:
+
+- Provides a consistent interface across databases
+- Translates SQL to each dialect automatically
+- Handles connection pooling and performance
+
+```{r}
+#| eval: false
+# This is what OHDSI code looks like:
+library(DatabaseConnector)
+
+connectionDetails <- createConnectionDetails(
+  dbms = "postgresql",
+  server = "server.example.com/omop",
+  user = "analyst",
+  password = Sys.getenv("DB_PASSWORD")  # From environment variable!
+)
+
+con <- connect(connectionDetails)
+```
+
+But DatabaseConnector requires Java. That's a system dependency we discussed earlier.
+
+---
+
+## Exercise: Explore an OHDSI Package
+
+Let's look at a real HADES package together: [CohortMethod](https://github.com/OHDSI/CohortMethod)
+
+```{r}
+#| eval: false
+# 1. Look at the package on GitHub
+# https://github.com/OHDSI/CohortMethod
+
+# 2. What's in the DESCRIPTION file?
+# - What does it depend on?
+# - Who maintains it?
+
+# 3. Look at the R/ directory
+# - How many R files are there?
+# - Pick one and skim it
+
+# 4. Check out the vignettes/ or docs
+# - What does this package do?
+```
+
+Questions to discuss:
+
+- What system dependencies might this package need?
+- How would you install it?
+- What other OHDSI packages does it depend on?
+
+---
+
+## Wrap-up
+
+Today we covered the foundations:
+
+1. **R is a program**: a binary that interprets your code
+2. **Packages are folders**: installed to library paths, loaded into sessions
+3. **Git tracks changes**: GitHub hosts repositories online
+4. **Dependencies come in layers**: system (OS, Java) and R packages
+5. **renv locks versions**: for reproducible environments
+6. **Databases store data**: In OHDSI, we typically work with data stored in remote databases
+
+Next session: We'll dive into OMOP and the Common Data Model.

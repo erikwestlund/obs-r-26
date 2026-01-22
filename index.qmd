@@ -1,0 +1,81 @@
+---
+title: "Observational Research Methods in R"
+subtitle: "Working with the OHDSI/HADES Ecosystem"
+format:
+  html:
+    theme: cosmo
+    toc: true
+    embed-resources: true
+---
+
+## Course Overview
+
+This course covers observational research methods using R with the OHDSI/HADES ecosystem. Over eight sessions, you'll learn to work with the OMOP Common Data Model, run standardized analyses, and use Strategus to orchestrate studies.
+
+## Sessions
+
+### Session 1: The R Workflow
+
+Environment, dependencies, and data foundations.
+
+- [Slides](slides/01_r-workflow/slides.html)
+- [Notebook: R Foundations](modules/01_r-workflow/r-foundations.html)
+
+**Topics covered:**
+
+- R as an interpreter, sessions, environments
+- Packages: installation, loading, library paths
+- Git and GitHub, Personal Access Tokens
+- System vs R dependencies, Java setup
+- renv for reproducibility
+- Introduction to databases
+
+---
+
+### Session 2: OMOP and the Common Data Model
+
+*Coming soon*
+
+---
+
+### Session 3: Cohort Building
+
+*Coming soon*
+
+---
+
+### Session 4: Cohort Diagnostics
+
+*Coming soon*
+
+---
+
+### Session 5: Characterization
+
+*Coming soon*
+
+---
+
+### Session 6: Population-Level Estimation
+
+*Coming soon*
+
+---
+
+### Session 7: Patient-Level Prediction
+
+*Coming soon*
+
+---
+### Session 8: Strategus and Putting It All Together
+
+*Coming soon*
+
+---
+
+## Resources
+
+- [OHDSI Website](https://ohdsi.org)
+- [HADES Documentation](https://ohdsi.github.io/Hades/)
+- [The Book of OHDSI](https://ohdsi.github.io/TheBookOfOhdsi/)
+- [OMOP CDM Documentation](https://ohdsi.github.io/CommonDataModel/)
