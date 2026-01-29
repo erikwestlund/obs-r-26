@@ -1,0 +1,459 @@
+---
+title: "Module 02: Data Workflow"
+subtitle: "Tools, Types, and Data Management"
+---
+
+```{r}
+#| include: false
+# We're not using scaffold() here since this is a teaching module
+# about the fundamentals that scaffold() abstracts away
+```
+
+## Agenda
+
+| Block | Topic | Format |
+|-------|-------|--------|
+| 1 | RStudio IDE exploration | Hands-on |
+| 2 | Git and GitHub setup | Discussion + practice |
+| 3 | Dependencies and renv | Discussion |
+| 4 | R basics refresher | Hands-on |
+| 5 | DatabaseConnector | Hands-on |
+| 6 | Exploring OHDSI packages | Exploration |
+
+---
+
+## 1. RStudio IDE Exploration
+
+### The four-pane layout
+
+RStudio organizes your workspace into four panes:
+
+| Pane | Location | Purpose |
+|------|----------|---------|
+| Source | Top-left | Write and edit code files |
+| Console | Bottom-left | Interactive R session (REPL) |
+| Environment/History | Top-right | View objects, history, connections |
+| Files/Plots/Packages/Help | Bottom-right | Navigate files, view plots, get help |
+
+### Exercise: Explore the panes
+
+1. **Source pane**: Open this file. Notice line numbers, syntax highlighting.
+2. **Console**: Type `2 + 2` and press Enter. This is the REPL.
+3. **Environment**: After running code that creates objects, they appear here.
+4. **Files**: Navigate to your project directory.
+
+```{r}
+#| eval: false
+# Create an object and watch it appear in the Environment pane
+my_data <- data.frame(x = 1:5, y = letters[1:5])
+
+# View it
+View(my_data)
+```
+
+### Useful keyboard shortcuts
+
+| Action | Windows/Linux | Mac |
+|--------|---------------|-----|
+| Run current line | Ctrl+Enter | Cmd+Enter |
+| Run entire script | Ctrl+Shift+Enter | Cmd+Shift+Enter |
+| Insert assignment `<-` | Alt+- | Option+- |
+| Insert pipe `|>` | Ctrl+Shift+M | Cmd+Shift+M |
+| Comment/uncomment | Ctrl+Shift+C | Cmd+Shift+C |
+
+---
+
+## 2. Git and GitHub Setup
+
+### Verify Git is installed
+
+```{r}
+#| eval: false
+system("git --version", intern = TRUE)
+```
+
+If you haven't configured Git yet:
+
+```bash
+# In your terminal (not R console):
+git config --global user.name "Your Name"
+git config --global user.email "your.email@example.com"
+```
+
+### GitHub Personal Access Token (PAT)
+
+Installing HADES packages requires authenticated access to GitHub. Set up a PAT:
+
+**Step 1: Create a PAT**
+
+```{r}
+#| eval: false
+install.packages("usethis")
+library(usethis)
+create_github_token(
+  scopes = c("(no scope)"),
+  description = "R:GITHUB_PAT",
+  host = "https://github.com"
+)
+```
+
+**Step 2: Add the PAT to R**
+
+```{r}
+#| eval: false
+usethis::edit_r_environ()
+```
+
+Add this line (using your actual PAT):
+
+```
+GITHUB_PAT = 'your_token_here'
+```
+
+Save and restart R.
+
+**Verify it works:**
+
+```{r}
+#| eval: false
+Sys.getenv("GITHUB_PAT")
+```
+
+---
+
+## 3. Dependencies and renv
+
+### Check your Java setup
+
+Many OHDSI packages require Java:
+
+```{r}
+#| eval: false
+system("java -version", intern = TRUE)
+Sys.getenv("JAVA_HOME")
+```
+
+### The renv workflow
+
+```{r}
+#| eval: false
+# Initialize renv in a project
+renv::init()
+
+# Install packages
+install.packages("dplyr")
+
+# Snapshot your current state
+renv::snapshot()
+
+# Collaborator restores exact versions
+renv::restore()
+```
+
+---
+
+## 4. R Basics Refresher
+
+### Vectors
+
+```{r}
+#| eval: false
+# Create vectors
+nums <- c(1, 2, 3, 4, 5)
+names <- c("Alice", "Bob", "Carol")
+
+# Access elements (1-indexed!)
+nums[1]
+nums[2:4]
+
+# Vectorized operations
+nums * 2
+nums > 3
+```
+
+### Data frames
+
+```{r}
+#| eval: false
+# Create a data frame
+df <- data.frame(
+  id = 1:4,
+  name = c("Alice", "Bob", "Carol", "David"),
+  score = c(85, 92, 78, 88)
+)
+
+# Inspect
+str(df)
+summary(df)
+
+# Access columns
+df$score
+df[, "score"]
+```
+
+### dplyr basics
+
+```{r}
+#| eval: false
+library(dplyr)
+
+df |>
+  filter(score > 80) |>
+  select(name, score) |>
+  arrange(desc(score))
+```
+
+---
+
+## 5. DatabaseConnector
+
+This is where we start using OHDSI tools.
+
+### Install DatabaseConnector
+
+```{r}
+#| eval: false
+install.packages("DatabaseConnector")
+```
+
+### Create a SQLite database
+
+SQLite is perfect for learning---it's a database in a single file, no server needed.
+
+```{r}
+#| eval: false
+library(DatabaseConnector)
+
+# Create connection details for a new SQLite database
+connectionDetails <- createConnectionDetails(
+  dbms = "sqlite",
+  server = "teaching.sqlite"
+)
+
+# Connect
+connection <- connect(connectionDetails)
+```
+
+### Create some data
+
+Let's create a simple "person" table like you'd find in OMOP:
+
+```{r}
+#| eval: false
+# Create sample data
+people <- data.frame(
+  person_id = 1:5,
+  year_of_birth = c(1985, 1990, 1978, 1995, 1982),
+  gender_concept_id = c(8507, 8532, 8532, 8507, 8532),
+  race_concept_id = c(8516, 8527, 8516, 8527, 8516)
+)
+
+# Write to database
+insertTable(
+  connection = connection,
+  tableName = "person",
+  data = people
+)
+```
+
+### Query the data
+
+```{r}
+#| eval: false
+# Simple query
+result <- querySql(
+  connection = connection,
+  sql = "SELECT * FROM person"
+)
+
+result
+```
+
+### Exercise: Write queries
+
+```{r}
+#| eval: false
+# 1. Select people born after 1985
+querySql(connection, "SELECT * FROM person WHERE year_of_birth > 1985")
+
+# 2. Count people by gender_concept_id
+querySql(connection, "
+  SELECT gender_concept_id, COUNT(*) as n
+  FROM person
+  GROUP BY gender_concept_id
+")
+
+# 3. Find the oldest person
+querySql(connection, "
+  SELECT * FROM person
+  ORDER BY year_of_birth ASC
+  LIMIT 1
+")
+```
+
+### Parameterized queries
+
+Use `@parameters` instead of hardcoding values:
+
+```{r}
+#| eval: false
+sql <- "SELECT * FROM person WHERE year_of_birth > @cutoff_year"
+
+result <- renderTranslateQuerySql(
+  connection = connection,
+  sql = sql,
+  cutoff_year = 1985
+)
+
+result
+```
+
+### Add more tables
+
+Let's add an observation table:
+
+```{r}
+#| eval: false
+# Create observation data
+observations <- data.frame(
+  observation_id = 1:8,
+  person_id = c(1, 1, 2, 2, 3, 4, 4, 5),
+  observation_concept_id = c(4111665, 4111665, 4111665, 4230359, 4111665, 4230359, 4111665, 4230359),
+  observation_date = as.Date(c(
+    "2020-01-15", "2020-06-20", "2020-02-10", "2020-03-05",
+    "2020-01-22", "2020-04-18", "2020-07-30", "2020-05-12"
+  ))
+)
+
+insertTable(
+  connection = connection,
+  tableName = "observation",
+  data = observations
+)
+```
+
+### Exercise: JOIN queries
+
+```{r}
+#| eval: false
+# Join person and observation
+querySql(connection, "
+  SELECT p.person_id, p.year_of_birth, o.observation_date, o.observation_concept_id
+  FROM person p
+  JOIN observation o ON p.person_id = o.person_id
+  ORDER BY p.person_id, o.observation_date
+")
+
+# Count observations per person
+querySql(connection, "
+  SELECT p.person_id, p.year_of_birth, COUNT(o.observation_id) as obs_count
+  FROM person p
+  LEFT JOIN observation o ON p.person_id = o.person_id
+  GROUP BY p.person_id, p.year_of_birth
+  ORDER BY obs_count DESC
+")
+```
+
+### SqlRender: SQL translation
+
+OHDSI's `SqlRender` translates SQL between database dialects:
+
+```{r}
+#| eval: false
+library(SqlRender)
+
+# SQL Server syntax
+sql <- "SELECT TOP 10 * FROM person;"
+
+# Translate to different databases
+translate(sql, targetDialect = "postgresql")
+# → "SELECT * FROM person LIMIT 10;"
+
+translate(sql, targetDialect = "sqlite")
+# → "SELECT * FROM person LIMIT 10;"
+
+translate(sql, targetDialect = "oracle")
+# → "SELECT * FROM person WHERE ROWNUM <= 10;"
+```
+
+### Clean up
+
+Always disconnect when done:
+
+```{r}
+#| eval: false
+disconnect(connection)
+
+# Optionally delete the database file
+# unlink("teaching.sqlite")
+```
+
+---
+
+## 6. Exploring OHDSI Packages
+
+### CommonDataModel
+
+The `CommonDataModel` package contains the DDL for creating OMOP CDM tables.
+
+**Repository**: <https://github.com/OHDSI/CommonDataModel>
+
+```{r}
+#| eval: false
+# Explore the package
+browseURL("https://github.com/OHDSI/CommonDataModel")
+```
+
+**Questions to explore:**
+
+1. What version of the CDM is current?
+2. Look at the `inst/ddl/` folder---what database dialects are supported?
+3. Find the documentation for the `person` table. What fields does it have?
+
+### Strategus
+
+`Strategus` orchestrates OHDSI analytics pipelines.
+
+**Repository**: <https://github.com/OHDSI/Strategus>
+
+```{r}
+#| eval: false
+browseURL("https://github.com/OHDSI/Strategus")
+```
+
+**Questions to explore:**
+
+1. What does Strategus do? (Check the README)
+2. What HADES packages does it coordinate?
+3. Look at the vignettes---what's the basic workflow?
+
+### Exercise: Browse a HADES package
+
+Pick one of these packages and explore its GitHub repository:
+
+- [CohortMethod](https://github.com/OHDSI/CohortMethod) - Comparative effectiveness
+- [PatientLevelPrediction](https://github.com/OHDSI/PatientLevelPrediction) - Predictive modeling
+- [CohortDiagnostics](https://github.com/OHDSI/CohortDiagnostics) - Cohort validation
+
+For your chosen package:
+
+1. Read the README. What does it do?
+2. Look at the DESCRIPTION file. What does it depend on?
+3. Check the R/ folder. How many R files are there?
+4. Find a vignette or documentation page.
+
+---
+
+## Wrap-up
+
+Today we covered:
+
+1. **RStudio IDE**: Four-pane layout for productive development
+2. **Git/GitHub**: Version control and PAT setup
+3. **Dependencies**: System (Java) and R packages; renv for reproducibility
+4. **R basics**: Vectors, data frames, dplyr
+5. **DatabaseConnector**: OHDSI's unified database interface
+6. **SqlRender**: SQL translation across dialects
+7. **OHDSI packages**: CommonDataModel and Strategus
+
+Next session: We'll dive into OMOP and the Common Data Model.

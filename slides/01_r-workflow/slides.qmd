@@ -26,15 +26,7 @@ System Dependencies (Java, compilers...)
 Operating System (Windows, macOS, Linux)
 ```
 
-## R is a Program
-
-- R is a **binary executable** installed on your computer
-- When you open RStudio or Positron, it launches R
-- R is an **interpreter**: it reads and executes code without a compilation step
-
-You can run R interactively (console) or in batch mode (`Rscript`)
-
-## R Sessions
+## R Sessions and Objects
 
 When R starts, it creates a **session** with:
 
@@ -42,230 +34,45 @@ When R starts, it creates a **session** with:
 - A **working directory** (where R looks for files)
 - Loaded **packages** (base R + what you load)
 
-When you quit R, the session ends. Objects disappear (unless you save them).
+Everything you create is an **object**. Even functions are objects.
 
-## Everything is an Object
-
-```r
-x <- 42
-f <- function(a) a + 1
-```
-
-Both `x` and `f` are objects. They live in your environment.
-
-Even functions are objects. Even environments are objects.
-
-## Assignment: `<-` vs `=`
-
-```r
-x <- c(1, 2, 3)
-mean(x = c(4, 5, 6))
-x  # still c(1, 2, 3)
-```
-
-```r
-mean(x <- c(4, 5, 6))
-x  # now c(4, 5, 6)
-```
-
-`=` inside a function call sets a **parameter**.
-
-`<-` always **assigns to an environment**.
-
-## Scope
+## Assignment and Scope
 
 ```r
 x <- 1
 
 add_to_self <- function(y) {
-  x <- y
+  x <- y       # Local assignment
   y + y
 }
 
 add_to_self(3)  # returns 6
-x               # still 1
+x               # still 1 (unchanged!)
 ```
 
-Why isn't `x` now 3?
+Assignments inside a function stay local. Functions don't modify objects in place---you must capture return values.
 
 ## Environments
 
-- The **global environment** is where your top-level objects live
-- When you call a function, R creates a **new environment** for it
-- Assignments inside a function stay in that function's environment
-- When the function returns, its environment is destroyed
+- **Global environment**: where your top-level objects live
+- **Function environments**: created when a function runs, destroyed when it returns
+- R packages are bundles of functions in their own environments
 
-## Why This Matters
-
-```r
-# This won't affect your data
-clean_data <- function(df) {
-  df <- df |> filter(!is.na(value))
-  df
-}
-
-my_data <- clean_data(my_data)  # must reassign!
-```
-
-Functions don't modify objects in place by default. You must capture the return value.
-
-## Why Functions Matter
-
-Functions encapsulate code and variables into a private scope.
-
-- Variables inside don't leak out
-- Safe to experiment
-- Return values are explicit
-
-R packages are just bundles of functions.
+This isolation is why R is safe for exploratory analysis.
 
 ## Packages
 
-A package is a bundle of:
+A package bundles functions, documentation, and data.
 
-- Functions
-- Documentation
-- Data (sometimes)
-- Metadata
-
-Packages extend what R can do.
-
-## Where Packages Come From
-
-| Source | Examples | How to install |
-|--------|----------|----------------|
+| Source | Examples | Install command |
+|--------|----------|-----------------|
 | CRAN | dplyr, ggplot2 | `install.packages()` |
 | Bioconductor | DESeq2 | `BiocManager::install()` |
 | GitHub | OHDSI/HADES | `remotes::install_github()` |
 
-## Where Packages Live
-
-Packages are just **folders** on your disk.
-
-```r
-.libPaths()
-```
-
-Shows you where R looks for packages.
-
-When you `install.packages()`, it downloads and extracts to one of these folders.
-
-## Installing vs Loading
-
 **Installing** = download to disk (once)
 
-```r
-install.packages("dplyr")
-```
-
-**Loading** = make available in session (every time)
-
-```r
-library(dplyr)
-```
-
-## Git and GitHub
-
-**Git** = version control software (runs locally)
-
-- Tracks changes to files
-- Unlimited undo
-- Branches for parallel work
-
-**GitHub** = hosting platform (in the cloud)
-
-- Backup
-- Collaboration
-- Where OHDSI packages live
-
-## Git is Not GitHub
-
-You can use Git without GitHub.
-
-But almost all open source projects use GitHub (or similar).
-
-OHDSI packages are on GitHub: `github.com/OHDSI/`
-
-## Dependencies
-
-Two kinds:
-
-**System dependencies**
-
-- R itself, Java, compilers
-- Installed at the OS level
-
-**R package dependencies**
-
-- Other packages your code needs
-- Managed by R
-
-## Why This Matters
-
-Your code works on your laptop.
-
-Your collaborator runs it. It breaks.
-
-Why?
-
-- Different R version
-- Different package versions
-- Missing system dependency (Java!)
-
-## renv
-
-`renv` solves the package version problem.
-
-- Creates a **project-specific library**
-- Records exact versions in `renv.lock`
-- Collaborators can recreate your environment exactly
-
-```r
-renv::init()
-renv::snapshot()
-renv::restore()
-```
-
-## Databases
-
-R holds data in memory. Fine for small data.
-
-Healthcare data = millions of rows. Doesn't fit.
-
-**Databases**:
-
-- Persistent storage
-- Optimized for queries
-- Handle data larger than memory
-
-## Why DatabaseConnector?
-
-Real OMOP databases run on:
-
-- PostgreSQL
-- SQL Server
-- Oracle
-- Redshift
-- ...
-
-Each has different SQL syntax. `DatabaseConnector` + `SqlRender` handles the translation.
-
-## The Cost: Java
-
-`DatabaseConnector` uses JDBC (Java Database Connectivity).
-
-JDBC requires Java installed on your system.
-
-This is why Java is a system dependency for OHDSI work.
-
-## Summary
-
-1. **R is a program** that interprets your code
-2. **Packages are folders** installed to library paths
-3. **Git tracks changes**; GitHub hosts code online
-4. **Dependencies**: system (OS, Java) vs R packages
-5. **renv** locks package versions for reproducibility
-6. **Databases** store data; OHDSI uses DatabaseConnector
+**Loading** = make available in session (`library()` each time)
 
 ## Next
 

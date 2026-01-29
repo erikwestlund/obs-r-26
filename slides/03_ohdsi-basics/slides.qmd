@@ -1,0 +1,256 @@
+---
+title: "OHDSI Basics"
+subtitle: "The Common Data Model and HADES (Provisional)"
+format: revealjs
+---
+
+## Today's Goal
+
+Understand the OMOP Common Data Model and how OHDSI tools work with it.
+
+. . .
+
+Jumpstart for exploring CDM data.
+
+## What is OHDSI?
+
+**Observational Health Data Sciences and Informatics**
+
+- Open science community
+- Standardized data model (OMOP CDM)
+- Open source tools (HADES)
+- Network studies across institutions
+
+<https://ohdsi.org>
+
+## The Problem OHDSI Solves
+
+Every hospital has different:
+
+- Database systems
+- Table structures
+- Coding systems (ICD-9, ICD-10, SNOMED, etc.)
+- Variable names
+
+How do you run the same analysis at multiple sites?
+
+## The Solution: OMOP CDM
+
+**Common Data Model** = standardized structure
+
+- Same tables everywhere
+- Same column names
+- Same coding system (concepts)
+
+Write code once, run anywhere.
+
+## CDM Core Tables
+
+| Table | What it stores |
+|-------|----------------|
+| `person` | Demographics (birth year, gender, race) |
+| `observation_period` | When we have data on each person |
+| `visit_occurrence` | Healthcare encounters |
+| `condition_occurrence` | Diagnoses |
+| `drug_exposure` | Medications |
+| `procedure_occurrence` | Procedures performed |
+| `measurement` | Lab results, vitals |
+
+## The person Table
+
+```sql
+SELECT person_id, year_of_birth, gender_concept_id
+FROM person
+LIMIT 5;
+```
+
+| person_id | year_of_birth | gender_concept_id |
+|-----------|---------------|-------------------|
+| 1 | 1985 | 8507 |
+| 2 | 1990 | 8532 |
+| 3 | 1978 | 8532 |
+
+What is `8507`? What is `8532`?
+
+## Concepts
+
+Everything in OMOP uses **concept IDs** instead of raw codes.
+
+| concept_id | concept_name | domain |
+|------------|--------------|--------|
+| 8507 | Male | Gender |
+| 8532 | Female | Gender |
+| 317898 | Heart failure | Condition |
+| 1124300 | Metformin | Drug |
+
+## The concept Table
+
+```sql
+SELECT concept_id, concept_name, domain_id, vocabulary_id
+FROM concept
+WHERE concept_id = 317898;
+```
+
+| concept_id | concept_name | domain_id | vocabulary_id |
+|------------|--------------|-----------|---------------|
+| 317898 | Heart failure | Condition | SNOMED |
+
+Concepts are the **lingua franca** of OMOP.
+
+## Vocabulary Mapping
+
+ICD-10: `I50.9` (Heart failure, unspecified)
+
+↓ mapped to ↓
+
+SNOMED: `317898` (Heart failure)
+
+Different source codes → same standard concept.
+
+## condition_occurrence
+
+```sql
+SELECT person_id, condition_concept_id, condition_start_date
+FROM condition_occurrence
+WHERE person_id = 1;
+```
+
+| person_id | condition_concept_id | condition_start_date |
+|-----------|---------------------|---------------------|
+| 1 | 317898 | 2020-03-15 |
+| 1 | 320128 | 2020-03-15 |
+
+## drug_exposure
+
+```sql
+SELECT person_id, drug_concept_id, drug_exposure_start_date
+FROM drug_exposure
+WHERE person_id = 1;
+```
+
+| person_id | drug_concept_id | drug_exposure_start_date |
+|-----------|-----------------|--------------------------|
+| 1 | 1124300 | 2020-03-15 |
+| 1 | 1308216 | 2020-03-20 |
+
+## Joining Tables
+
+Find all conditions for people on Metformin:
+
+```sql
+SELECT DISTINCT c.condition_concept_id, co.concept_name
+FROM drug_exposure d
+JOIN condition_occurrence c ON d.person_id = c.person_id
+JOIN concept co ON c.condition_concept_id = co.concept_id
+WHERE d.drug_concept_id = 1124300
+```
+
+## Cohorts
+
+A **cohort** is a set of persons who satisfy a set of criteria for a duration of time.
+
+- Entry criteria (how do you get in?)
+- Exit criteria (when do you leave?)
+- Inclusion/exclusion criteria
+
+Stored in a cohort table: `(cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)`
+
+## HADES
+
+**Health Analytics Data-to-Evidence Suite**
+
+Collection of R packages for working with OMOP data:
+
+- `DatabaseConnector`: Database access
+- `SqlRender`: SQL translation
+- `Capr`: Cohort definition in R
+- `CohortGenerator`: Create cohorts
+- `CohortDiagnostics`: Validate cohorts
+- `CohortMethod`: Comparative effectiveness
+
+## Strategus
+
+**Orchestration layer** for HADES packages.
+
+Instead of running each package separately:
+
+1. Define your analysis specification
+2. Strategus coordinates execution
+3. Results aggregated automatically
+
+<https://github.com/OHDSI/Strategus>
+
+## Strategus Workflow
+
+```
+Analysis Specification (JSON)
+         ↓
+    Strategus
+         ↓
+  ┌──────┴──────┐
+  ↓      ↓      ↓
+Cohort  Char.  CohortMethod
+Gen.
+  └──────┬──────┘
+         ↓
+    Results Database
+```
+
+## Why Strategus?
+
+- **Reproducibility**: Specification captures everything
+- **Portability**: Run same analysis at multiple sites
+- **Coordination**: Handles dependencies between packages
+- **Results management**: Structured output
+
+## CDM Exploration Pattern
+
+```r
+library(DatabaseConnector)
+
+connection <- connect(connectionDetails)
+
+# Query the CDM
+persons <- querySql(connection, "
+  SELECT * FROM person LIMIT 100
+")
+
+conditions <- querySql(connection, "
+  SELECT c.*, co.concept_name
+  FROM condition_occurrence c
+  JOIN concept co ON c.condition_concept_id = co.concept_id
+  LIMIT 100
+")
+
+disconnect(connection)
+```
+
+## Finding Concepts
+
+Use Athena to search for concepts:
+
+<https://athena.ohdsi.org>
+
+Search for "heart failure" → find concept IDs → use in queries.
+
+## Summary
+
+1. **OMOP CDM** standardizes healthcare data structure
+2. **Concepts** provide a common vocabulary
+3. **Core tables**: person, condition, drug, procedure, measurement
+4. **Cohorts** define populations for study
+5. **HADES** packages work with CDM data
+6. **Strategus** orchestrates complex analyses
+
+## Resources
+
+- OMOP CDM: <https://ohdsi.github.io/CommonDataModel/>
+- The Book of OHDSI: <https://ohdsi.github.io/TheBookOfOhdsi/>
+- Athena (concept search): <https://athena.ohdsi.org>
+- HADES: <https://ohdsi.github.io/Hades/>
+
+## Next
+
+Hands-on CDM exploration in the module.
+
+`modules/03_ohdsi-basics/ohdsi-basics.qmd`

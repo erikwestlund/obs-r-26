@@ -1,0 +1,360 @@
+---
+title: "Data Workflow"
+subtitle: "Tools, Types, and Data Management"
+format: revealjs
+---
+
+## Housekeeping
+
+- See Canvas for DataCamp assignments.
+- Course products:
+
+  1. Strategus cohort creation/diagnostics module
+  2. Strategus characterization/incidence module
+  3. Strategus estimation (CohortMethod, SCCS) module
+  4. Final project: put it all together
+
+Philosophy: don't worry about running the study, just design it, compile it, make it work.
+
+## Today's Goal
+
+Set up your development environment and learn the tools for working with data in R.
+
+. . .
+
+Then: hands-on practice in the module notebook.
+
+## RStudio IDE
+
+Four-pane layout:
+
+| Pane | Purpose |
+|------|---------|
+| **Source** (top-left) | Write scripts and notebooks |
+| **Console** (bottom-left) | Interactive R session |
+| **Environment** (top-right) | Your objects and history |
+| **Files/Plots/Help** (bottom-right) | Everything else |
+
+## Git and GitHub
+
+**Git** = version control software (runs locally)
+
+- Tracks changes to files
+- Unlimited undo
+
+**GitHub** = hosting platform (in the cloud)
+
+- Backup and collaboration
+- Where OHDSI packages live: `github.com/OHDSI/`
+
+## Dependencies
+
+Two kinds:
+
+**System dependencies**
+
+- R itself, Java, compilers
+- Installed at the OS level
+
+**R package dependencies**
+
+- Other packages your code needs
+- Managed by R
+
+## renv
+
+`renv` solves the package version problem.
+
+- Creates a **project-specific library**
+- Records exact versions in `renv.lock`
+- Collaborators can recreate your environment exactly
+
+```r
+renv::init()
+renv::snapshot()
+renv::restore()
+```
+
+## R Basics: Vectors
+
+The fundamental building block. A vector holds multiple values of the **same type**.
+
+```r
+nums <- c(1, 2, 3, 4)
+names <- c("Alice", "Bob")
+flags <- c(TRUE, FALSE, TRUE)
+```
+
+No scalars---even `x <- 5` is a vector of length 1.
+
+## R Basics: Data Frames
+
+A data frame is a list of vectors (columns) of equal length:
+
+```r
+df <- data.frame(
+  id = 1:3,
+  name = c("Alice", "Bob", "Carol"),
+  score = c(85, 92, 78)
+)
+```
+
+This is R's primary structure for tabular data.
+
+## R Basics: dplyr
+
+The tidyverse provides a grammar for data manipulation:
+
+```r
+library(dplyr)
+
+df |>
+  filter(age > 18) |>
+  select(id, name, score) |>
+  mutate(grade = score / 100) |>
+  arrange(desc(score))
+```
+
+Each verb does one thing. Chain them with `|>`.
+
+## Why Databases?
+
+R holds data in memory. Fine for small data.
+
+Healthcare data = millions of rows. Doesn't fit.
+
+**Databases**:
+
+- Persistent storage
+- Optimized for queries
+- Handle data larger than memory
+
+## SQL: Querying Databases
+
+SQL (Structured Query Language) retrieves data from databases:
+
+```sql
+SELECT patient_id, drug_name, start_date
+FROM drug_exposure
+WHERE start_date >= '2020-01-01'
+LIMIT 100;
+```
+
+R sends SQL to the database, which returns results.
+
+## The Challenge: Many Database Types
+
+Real OMOP databases run on:
+
+- PostgreSQL
+- SQL Server
+- Oracle
+- Redshift
+- SQLite
+- ...
+
+Each has slightly different SQL syntax!
+
+## OHDSI's Solution: DatabaseConnector
+
+`DatabaseConnector` provides a **unified interface** to all major databases.
+
+Write code once, run on any database.
+
+```r
+library(DatabaseConnector)
+```
+
+## Installing DatabaseConnector
+
+```r
+install.packages("DatabaseConnector")
+```
+
+DatabaseConnector uses **JDBC** (Java Database Connectivity).
+
+This requires Java installed on your system---that's the system dependency we mentioned.
+
+## Creating a Connection
+
+```r
+library(DatabaseConnector)
+
+connectionDetails <- createConnectionDetails(
+
+  dbms = "sqlite",
+  server = "my_database.sqlite"
+)
+
+connection <- connect(connectionDetails)
+```
+
+The `dbms` parameter tells DatabaseConnector which database type you're using.
+
+## Supported Database Systems
+
+```r
+# SQLite (file-based, no server needed)
+dbms = "sqlite"
+
+# PostgreSQL
+dbms = "postgresql"
+
+# SQL Server
+dbms = "sql server"
+
+# Oracle
+dbms = "oracle"
+
+# And more: redshift, spark, bigquery, snowflake...
+```
+
+## Creating Tables
+
+```r
+# Create a simple data frame
+people <- data.frame(
+  person_id = 1:3,
+  name = c("Alice", "Bob", "Carol"),
+  year_of_birth = c(1985, 1990, 1978)
+)
+
+# Write it to the database
+insertTable(
+  connection = connection,
+  tableName = "person",
+  data = people
+)
+```
+
+## Querying with SQL
+
+```r
+# Run a query and get results
+result <- querySql(
+  connection = connection,
+  sql = "SELECT * FROM person WHERE year_of_birth > 1980"
+)
+
+result
+```
+
+Returns a data frame you can work with in R.
+
+## Parameterized Queries
+
+```r
+# Use @parameters in your SQL
+sql <- "SELECT * FROM person WHERE year_of_birth > @cutoff"
+
+result <- renderTranslateQuerySql(
+
+  connection = connection,
+  sql = sql,
+  cutoff = 1985
+)
+```
+
+`renderTranslateQuerySql` handles parameter substitution **and** dialect translation.
+
+## SqlRender: Write Once, Run Anywhere
+
+OHDSI's `SqlRender` translates SQL between dialects:
+
+```r
+library(SqlRender)
+
+sql <- "SELECT TOP 10 * FROM person;"
+
+translate(sql, targetDialect = "postgresql")
+# → "SELECT * FROM person LIMIT 10;"
+
+translate(sql, targetDialect = "oracle")
+# → "SELECT * FROM person WHERE ROWNUM <= 10;"
+```
+
+## Executing Statements
+
+```r
+# For statements that don't return data (CREATE, INSERT, UPDATE, DELETE)
+executeSql(
+
+  connection = connection,
+
+  sql = "CREATE INDEX idx_person ON person (person_id)"
+)
+```
+
+## Cleaning Up
+
+Always disconnect when done:
+
+```r
+disconnect(connection)
+```
+
+Or use `connect()` with `on.exit()`:
+
+```r
+connection <- connect(connectionDetails)
+on.exit(disconnect(connection))
+```
+
+## The Full Pattern
+
+```r
+library(DatabaseConnector)
+
+# 1. Define connection
+connectionDetails <- createConnectionDetails(
+  dbms = "sqlite",
+  server = "omop.sqlite"
+)
+
+# 2. Connect
+connection <- connect(connectionDetails)
+
+# 3. Query
+patients <- querySql(connection, "SELECT * FROM person LIMIT 100")
+
+# 4. Disconnect
+disconnect(connection)
+```
+
+## Explore: CommonDataModel Package
+
+The `CommonDataModel` package contains DDL (Data Definition Language) for creating OMOP CDM tables.
+
+<https://github.com/OHDSI/CommonDataModel>
+
+- Table definitions for all CDM versions
+- Scripts to create empty CDM databases
+- Documentation of the data model
+
+## Explore: Strategus Package
+
+`Strategus` orchestrates OHDSI analytics pipelines.
+
+<https://github.com/OHDSI/Strategus>
+
+- Coordinates multiple HADES packages
+- Manages analysis execution
+- Handles results aggregation
+
+This is where we're headed in this course.
+
+## Summary
+
+1. **RStudio** provides a productive development environment
+2. **Git/GitHub** track changes; OHDSI lives on GitHub
+3. **renv** locks package versions for reproducibility
+4. **DatabaseConnector** provides unified database access
+5. **SqlRender** translates SQL across dialects
+6. **CommonDataModel** defines the OMOP structure
+7. **Strategus** orchestrates OHDSI analyses
+
+## Next
+
+Open the module notebook and let's work through it together.
+
+`modules/02_data-workflow/data-workflow.qmd`

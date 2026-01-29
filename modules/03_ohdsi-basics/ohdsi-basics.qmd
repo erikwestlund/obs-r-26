@@ -1,0 +1,448 @@
+---
+title: "Module 03: OHDSI Basics"
+subtitle: "Exploring the Common Data Model"
+---
+
+```{r}
+#| include: false
+# We're not using scaffold() here since this is a teaching module
+```
+
+## Agenda
+
+| Block | Topic | Format |
+|-------|-------|--------|
+| 1 | Setup Eunomia | Hands-on |
+| 2 | Explore CDM tables | Hands-on |
+| 3 | Work with concepts | Hands-on |
+| 4 | Build simple cohorts | Hands-on |
+| 5 | Explore OHDSI packages | Exploration |
+
+---
+
+## 1. Setup Eunomia
+
+Eunomia is OHDSI's sample CDM database. It contains synthetic patient data in a real OMOP CDM structure, running in SQLite.
+
+### Install Eunomia
+
+```{r}
+#| eval: false
+install.packages("Eunomia")
+```
+### Load packages and connect
+
+```{r}
+#| eval: false
+library(DatabaseConnector)
+library(Eunomia)
+library(dplyr)
+
+# Get connection details for the Eunomia database
+# This downloads the sample data on first run
+connectionDetails <- getEunomiaConnectionDetails()
+
+# Connect
+connection <- connect(connectionDetails)
+```
+
+### Where does Eunomia live?
+
+Eunomia is just a SQLite file on your disk. Let's find it:
+
+```{r}
+#| eval: false
+# The connection details tell us where the database file is
+connectionDetails$server()
+
+# You can also find it directly
+eunomiaPath <- Eunomia::getDatabaseFile("GiBleed")
+eunomiaPath
+
+# Check the file exists and its size
+file.info(eunomiaPath)
+```
+This is a real file you can browse to in your file explorer. It's typically stored in your R library path under the Eunomia package directory.
+
+**Why this matters**: There's no magic. A SQLite database is just a file. When you query it, you're reading from this file. The same pattern applies to "real" databases---they're just files on a server somewhere.
+
+### What's in the database?
+
+```{r}
+#| eval: false
+# List all tables
+getTableNames(connection, databaseSchema = "main")
+```
+
+You'll see all the standard OMOP CDM tables: person, observation_period, visit_occurrence, condition_occurrence, drug_exposure, and more.
+
+---
+
+## 2. Explore CDM Tables
+
+### The person table
+
+```{r}
+#| eval: false
+querySql(connection, "SELECT * FROM main.person LIMIT 10")
+```
+
+Notice the concept IDs for gender, race, ethnicity. These aren't human-readable yet.
+
+### Join with concept to see names
+
+```{r}
+#| eval: false
+querySql(connection, "
+  SELECT
+    p.person_id,
+    p.year_of_birth,
+    g.concept_name as gender,
+    r.concept_name as race
+  FROM main.person p
+  LEFT JOIN main.concept g ON p.gender_concept_id = g.concept_id
+  LEFT JOIN main.concept r ON p.race_concept_id = r.concept_id
+  LIMIT 20
+")
+```
+
+### Demographic summary
+
+```{r}
+#| eval: false
+# Count by gender
+querySql(connection, "
+  SELECT g.concept_name as gender, COUNT(*) as n
+  FROM main.person p
+  LEFT JOIN main.concept g ON p.gender_concept_id = g.concept_id
+  GROUP BY g.concept_name
+")
+```
+
+### Exercise: Age distribution
+
+```{r}
+#| eval: false
+# Calculate approximate current age and summarize
+querySql(connection, "
+  SELECT
+    (2024 - year_of_birth) / 10 * 10 as age_decade,
+    COUNT(*) as n
+  FROM main.person
+  GROUP BY age_decade
+  ORDER BY age_decade
+")
+```
+
+### Observation periods
+
+When do we have data on each person?
+
+```{r}
+#| eval: false
+querySql(connection, "
+  SELECT *
+  FROM main.observation_period
+  LIMIT 10
+")
+
+# How long are observation periods on average?
+querySql(connection, "
+  SELECT
+    AVG(julianday(observation_period_end_date) - julianday(observation_period_start_date)) as avg_days,
+    MIN(observation_period_start_date) as earliest,
+    MAX(observation_period_end_date) as latest
+  FROM main.observation_period
+")
+```
+
+---
+
+## 3. Work with Concepts
+
+The concept table is the vocabulary backbone of OMOP.
+
+### Explore the concept table
+
+```{r}
+#| eval: false
+querySql(connection, "
+  SELECT concept_id, concept_name, domain_id, vocabulary_id, concept_class_id
+  FROM main.concept
+  LIMIT 20
+")
+```
+
+### Find concepts by name
+
+```{r}
+#| eval: false
+# Search for diabetes-related concepts
+querySql(connection, "
+  SELECT concept_id, concept_name, domain_id, vocabulary_id
+  FROM main.concept
+  WHERE LOWER(concept_name) LIKE '%diabetes%'
+  AND standard_concept = 'S'
+  LIMIT 20
+")
+```
+
+### Find all condition concepts used in the data
+
+```{r}
+#| eval: false
+querySql(connection, "
+  SELECT DISTINCT
+    c.concept_id,
+    c.concept_name,
+    c.vocabulary_id
+  FROM main.condition_occurrence co
+  JOIN main.concept c ON co.condition_concept_id = c.concept_id
+  ORDER BY c.concept_name
+  LIMIT 30
+")
+```
+
+### Count conditions
+
+```{r}
+#| eval: false
+querySql(connection, "
+  SELECT
+    c.concept_name,
+    COUNT(*) as n_occurrences,
+    COUNT(DISTINCT co.person_id) as n_patients
+  FROM main.condition_occurrence co
+  JOIN main.concept c ON co.condition_concept_id = c.concept_id
+  GROUP BY c.concept_name
+  ORDER BY n_patients DESC
+  LIMIT 20
+")
+```
+
+### Exercise: Explore drugs
+
+```{r}
+#| eval: false
+# What are the most common drugs?
+querySql(connection, "
+  SELECT
+    c.concept_name as drug_name,
+    COUNT(*) as n_exposures,
+    COUNT(DISTINCT de.person_id) as n_patients
+  FROM main.drug_exposure de
+  JOIN main.concept c ON de.drug_concept_id = c.concept_id
+  GROUP BY c.concept_name
+  ORDER BY n_patients DESC
+  LIMIT 20
+")
+```
+
+---
+
+## 4. Build Simple Cohorts
+
+A cohort is a set of persons meeting specific criteria for a period of time.
+
+### Find persons with a specific condition
+
+Let's find persons with Type 2 diabetes (concept_id = 201826):
+
+```{r}
+#| eval: false
+# First, verify the concept exists
+querySql(connection, "
+  SELECT concept_id, concept_name
+  FROM main.concept
+  WHERE concept_id = 201826
+")
+
+# Find all persons with this condition
+t2dm_patients <- querySql(connection, "
+  SELECT DISTINCT
+    co.person_id,
+    MIN(co.condition_start_date) as first_diagnosis
+  FROM main.condition_occurrence co
+  WHERE co.condition_concept_id = 201826
+  GROUP BY co.person_id
+")
+
+nrow(t2dm_patients)
+head(t2dm_patients)
+```
+
+### Build a cohort table structure
+
+```{r}
+#| eval: false
+# Standard cohort format
+t2dm_cohort <- querySql(connection, "
+  SELECT
+    1 as cohort_definition_id,
+    co.person_id as subject_id,
+    MIN(co.condition_start_date) as cohort_start_date,
+    MIN(co.condition_start_date) as cohort_end_date
+  FROM main.condition_occurrence co
+  WHERE co.condition_concept_id = 201826
+  GROUP BY co.person_id
+")
+
+head(t2dm_cohort)
+```
+
+### Cohort with drug exposure requirement
+
+Persons with hypertension who are on ACE inhibitors:
+
+```{r}
+#| eval: false
+# First find hypertension and ACE inhibitor concepts
+querySql(connection, "
+  SELECT concept_id, concept_name
+  FROM main.concept
+  WHERE LOWER(concept_name) LIKE '%hypertension%'
+  AND domain_id = 'Condition'
+  AND standard_concept = 'S'
+  LIMIT 10
+")
+
+querySql(connection, "
+  SELECT concept_id, concept_name
+  FROM main.concept
+  WHERE LOWER(concept_name) LIKE '%lisinopril%'
+  AND domain_id = 'Drug'
+  LIMIT 10
+")
+```
+
+```{r}
+#| eval: false
+# Now build the cohort (adjust concept IDs based on what you find)
+# This example uses placeholder IDs - replace with actual ones from your search
+htn_ace_cohort <- querySql(connection, "
+  SELECT DISTINCT
+    2 as cohort_definition_id,
+    co.person_id as subject_id,
+    co.condition_start_date as cohort_start_date,
+    co.condition_start_date as cohort_end_date
+  FROM main.condition_occurrence co
+  WHERE co.condition_concept_id IN (
+    SELECT concept_id FROM main.concept
+    WHERE LOWER(concept_name) LIKE '%hypertensive%'
+    AND standard_concept = 'S'
+  )
+  AND co.person_id IN (
+    SELECT DISTINCT person_id
+    FROM main.drug_exposure de
+    JOIN main.concept c ON de.drug_concept_id = c.concept_id
+    WHERE LOWER(c.concept_name) LIKE '%lisinopril%'
+  )
+")
+
+nrow(htn_ace_cohort)
+```
+
+### Exercise: Build your own cohort
+
+```{r}
+#| eval: false
+# Task: Find persons with ANY condition who have at least 2 visits
+# Hint: Join condition_occurrence with visit_occurrence
+
+querySql(connection, "
+  SELECT
+    co.person_id,
+    COUNT(DISTINCT vo.visit_occurrence_id) as n_visits
+  FROM main.condition_occurrence co
+  JOIN main.visit_occurrence vo ON co.person_id = vo.person_id
+  GROUP BY co.person_id
+  HAVING COUNT(DISTINCT vo.visit_occurrence_id) >= 2
+  LIMIT 20
+")
+```
+
+---
+
+## 5. Explore OHDSI Packages
+
+### CommonDataModel
+
+Contains the official DDL for all CDM tables.
+
+```{r}
+#| eval: false
+browseURL("https://github.com/OHDSI/CommonDataModel")
+
+# Questions to explore:
+# 1. How many tables are in CDM 5.4?
+# 2. What fields does observation_period have?
+# 3. What's the difference between condition_occurrence and condition_era?
+```
+
+### Strategus
+
+Orchestrates HADES package execution.
+
+```{r}
+#| eval: false
+browseURL("https://github.com/OHDSI/Strategus")
+
+# Questions to explore:
+# 1. What is an "analysis specification"?
+# 2. What modules are available?
+# 3. How do results get stored?
+```
+
+### Athena
+
+Search for standard concepts online.
+
+```{r}
+#| eval: false
+browseURL("https://athena.ohdsi.org")
+
+# Exercise:
+# 1. Search for "Type 2 diabetes mellitus"
+# 2. What's the standard concept ID?
+# 3. What vocabulary is it from?
+# 4. What ICD-10 codes map to it?
+```
+
+### The Book of OHDSI
+
+Comprehensive guide to OHDSI methods.
+
+```{r}
+#| eval: false
+browseURL("https://ohdsi.github.io/TheBookOfOhdsi/")
+
+# Chapters to bookmark:
+# - Chapter 4: The Common Data Model
+# - Chapter 6: Defining Cohorts
+# - Chapter 12: Population-Level Estimation
+```
+
+---
+
+## Clean up
+
+```{r}
+#| eval: false
+disconnect(connection)
+```
+
+---
+
+## Wrap-up
+
+Today we:
+
+1. Connected to a real OMOP CDM using Eunomia
+2. Explored core tables: person, observation_period, condition_occurrence, drug_exposure
+3. Learned how concepts provide standardized vocabulary
+4. Built simple cohorts with SQL
+5. Explored key OHDSI resources
+
+**Key takeaway**: The CDM standardizes structure, concepts standardize meaning. Eunomia gives you a safe sandbox to learn.
+
+Next: Deeper dive into cohort definitions and HADES packages.
