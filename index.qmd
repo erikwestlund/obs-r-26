@@ -19,7 +19,21 @@ This course covers observational research methods using R with the OHDSI/HADES e
 Environment, dependencies, and data foundations.
 
 - [Slides](slides/01_r-workflow/slides.html)
-- [Notebook: R Foundations](modules/01_r-workflow/r-foundations.html)
+- [Module: R Foundations](modules/01_r-workflow/r-foundations.html)
+
+### Session 2: Data Workflow
+
+Tools, types, and data management with DatabaseConnector.
+
+- [Slides](slides/02_data-workflow/slides.html)
+- [Module: Data Workflow](modules/02_data-workflow/data-workflow.html)
+
+### Session 3: OHDSI Basics (Provisional)
+
+The Common Data Model and HADES ecosystem.
+
+- [Slides](slides/03_ohdsi-basics/slides.html)
+- [Module: OHDSI Basics](modules/03_ohdsi-basics/ohdsi-basics.html)
 
 ## Other Topics
 
