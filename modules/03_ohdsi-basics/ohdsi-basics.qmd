@@ -1,10 +1,6 @@
 ---
 title: "Module 03: Git, SQL, and the OMOP CDM"
 subtitle: "Hands-on Practice with Version Control and Healthcare Data"
-format:
-  html:
-    mermaid:
-      theme: neutral
 ---
 
 ```{r}
@@ -233,59 +229,23 @@ Open in your browser: <https://github.com/OHDSI/CommonDataModel>
 
 ### CDM Table Relationships
 
-The CDM tables connect through `person_id` and `concept_id`:
+The CDM tables connect through `person_id` and `concept_id`.
 
-```{mermaid}
-erDiagram
-    PERSON ||--o{ OBSERVATION_PERIOD : has
-    PERSON ||--o{ VISIT_OCCURRENCE : has
-    PERSON ||--o{ CONDITION_OCCURRENCE : has
-    PERSON ||--o{ DRUG_EXPOSURE : has
-    PERSON ||--o{ PROCEDURE_OCCURRENCE : has
-    PERSON ||--o{ MEASUREMENT : has
+**Core clinical tables** (all link to `person` via `person_id`):
 
-    VISIT_OCCURRENCE ||--o{ CONDITION_OCCURRENCE : contains
-    VISIT_OCCURRENCE ||--o{ DRUG_EXPOSURE : contains
-    VISIT_OCCURRENCE ||--o{ PROCEDURE_OCCURRENCE : contains
-    VISIT_OCCURRENCE ||--o{ MEASUREMENT : contains
+- `person`: Demographics (birth year, gender, race)
+- `observation_period`: When we have data on each person
+- `visit_occurrence`: Healthcare encounters
+- `condition_occurrence`: Diagnoses
+- `drug_exposure`: Medications
+- `procedure_occurrence`: Procedures performed
+- `measurement`: Labs and vitals
 
-    CONCEPT ||--o{ CONDITION_OCCURRENCE : defines
-    CONCEPT ||--o{ DRUG_EXPOSURE : defines
-    CONCEPT ||--o{ PROCEDURE_OCCURRENCE : defines
-    CONCEPT ||--o{ MEASUREMENT : defines
-    CONCEPT ||--o{ PERSON : defines
+**The vocabulary table:**
 
-    PERSON {
-        int person_id PK
-        int gender_concept_id FK
-        int year_of_birth
-        int race_concept_id FK
-    }
-    VISIT_OCCURRENCE {
-        int visit_occurrence_id PK
-        int person_id FK
-        date visit_start_date
-        int visit_concept_id FK
-    }
-    CONDITION_OCCURRENCE {
-        int condition_occurrence_id PK
-        int person_id FK
-        int condition_concept_id FK
-        date condition_start_date
-    }
-    DRUG_EXPOSURE {
-        int drug_exposure_id PK
-        int person_id FK
-        int drug_concept_id FK
-        date drug_exposure_start_date
-    }
-    CONCEPT {
-        int concept_id PK
-        string concept_name
-        string domain_id
-        string vocabulary_id
-    }
-```
+- `concept`: Standardized meanings for all coded values
+
+Clinical events link to visits via `visit_occurrence_id`, and everything uses `concept_id` to reference standardized terminology.
 
 ### Key insight
 
@@ -647,48 +607,15 @@ ggplot(timeline, aes(x = date, y = event, color = type)) +
   theme(axis.text.y = element_text(size = 8))
 ```
 
-### Patient data flow diagram
+### How the data connects
 
-This shows how a patient's data connects across CDM tables:
+For any patient, the data flows like this:
 
-```{mermaid}
-flowchart TD
-    subgraph Patient Record
-        P[person<br/>Demographics]
-    end
-
-    subgraph Time Boundaries
-        OP[observation_period<br/>When we have data]
-    end
-
-    subgraph Clinical Events
-        V[visit_occurrence<br/>Encounters]
-        CO[condition_occurrence<br/>Diagnoses]
-        DE[drug_exposure<br/>Medications]
-        PR[procedure_occurrence<br/>Procedures]
-        ME[measurement<br/>Labs & Vitals]
-    end
-
-    subgraph Vocabulary
-        C[concept<br/>Standardized meanings]
-    end
-
-    P --> OP
-    P --> V
-    V --> CO
-    V --> DE
-    V --> PR
-    V --> ME
-
-    CO -.-> |condition_concept_id| C
-    DE -.-> |drug_concept_id| C
-    PR -.-> |procedure_concept_id| C
-    ME -.-> |measurement_concept_id| C
-    P -.-> |gender_concept_id| C
-
-    style P fill:#e1f5fe
-    style C fill:#fff9c4
-```
+1. Start with `person` (demographics)
+2. Check `observation_period` to see when we have data
+3. Look at `visit_occurrence` to find their encounters
+4. From visits, find clinical events: `condition_occurrence`, `drug_exposure`, `procedure_occurrence`, `measurement`
+5. Join any `*_concept_id` column to `concept` to get human-readable names
 
 ### Questions to explore
 
