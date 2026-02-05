@@ -28,12 +28,12 @@ Tools, types, and data management with DatabaseConnector.
 - [Slides](slides/02_data-workflow/slides.html)
 - [Module: Data Workflow](modules/02_data-workflow/data-workflow.html)
 
-### Session 3: OHDSI Basics (Provisional)
+### Session 3: Git, Databases, and OHDSI's SQL Strategy
 
-The Common Data Model and HADES ecosystem.
+Version control, remote databases, and how OHDSI handles SQL across platforms.
 
 - [Slides](slides/03_ohdsi-basics/slides.html)
-- [Module: OHDSI Basics](modules/03_ohdsi-basics/ohdsi-basics.html)
+- [Module: Git, SQL, and the OMOP CDM](modules/03_ohdsi-basics/ohdsi-basics.html)
 
 ## Other Topics
 

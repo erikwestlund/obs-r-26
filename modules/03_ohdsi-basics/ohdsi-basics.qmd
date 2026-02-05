@@ -1,72 +1,329 @@
 ---
-title: "Module 03: OHDSI Basics"
-subtitle: "Exploring the Common Data Model"
+title: "Module 03: Git, SQL, and the OMOP CDM"
+subtitle: "Hands-on Practice with Version Control and Healthcare Data"
+format:
+  html:
+    mermaid:
+      theme: neutral
 ---
 
 ```{r}
 #| include: false
 # We're not using scaffold() here since this is a teaching module
+# about the fundamentals that scaffold() abstracts away.
 ```
 
 ## Agenda
 
-| Block | Topic | Format |
-|-------|-------|--------|
-| 1 | Setup Eunomia | Hands-on |
-| 2 | Explore CDM tables | Hands-on |
-| 3 | Work with concepts | Hands-on |
-| 4 | Build simple cohorts | Hands-on |
-| 5 | Explore OHDSI packages | Exploration |
+1. **Git Practice** (Hands-on)
+2. **OMOP CDM Schema Tour** (Exploration)
+3. **Eunomia Setup & SQL Basics** (Hands-on)
+4. **SqlRender Across Databases** (Demo)
+5. **Patient Odyssey** (Guided Exploration)
+6. **ATLAS Cohort Definitions** (Exploration)
 
 ---
 
-## 1. Setup Eunomia
+## 1. Git Practice
 
-Eunomia is OHDSI's sample CDM database. It contains synthetic patient data in a real OMOP CDM structure, running in SQLite.
+We'll create a Git repository using RStudio, practice the workflow with both the terminal and RStudio's built-in tools.
 
-### Install Eunomia
+### Create a new RStudio Project
+
+1. In RStudio: **File -> New Project...**
+2. Select **New Directory**
+3. Select **New Project**
+4. Name it `git-practice`
+5. Choose a location (e.g., your Desktop)
+6. Click **Create Project**
+
+RStudio opens your new project. Notice there's no Git pane yet.
+
+*(Note: RStudio has a "Create a git repository" checkbox you can use to skip the next step, but we'll do it manually to learn the command.)*
+
+### Initialize Git via terminal
+
+Open the Terminal in RStudio (Tools -> Terminal -> New Terminal).
+
+```bash
+git init
+```
+
+You should see: `Initialized empty Git repository in .../git-practice/.git/`
+
+Now look at RStudio. The **Git pane** should appear (usually top-right). If not, restart RStudio or go to Tools -> Project Options -> Git/SVN and confirm Git is detected.
+
+### Copy this module file
+
+Copy this module file (`ohdsi-basics.qmd`) into your new `git-practice` folder. You can:
+
+- Use your file browser to copy/paste, or
+- In the RStudio Files pane, click **More -> Set As Working Directory**, then copy the file
+
+### Explore RStudio's Git pane
+
+Look at the **Git pane** (usually top-right, next to Environment/History).
+
+You should see `ohdsi-basics.qmd` listed with a yellow **?** icon. This means it's untracked.
+
+### Stage using RStudio
+
+In the Git pane:
+
+1. Check the box next to `ohdsi-basics.qmd`
+2. The icon changes to a green **A** (Added/staged)
+
+That's it. You just staged a file without touching the terminal.
+
+### Commit using RStudio
+
+1. Click **Commit** in the Git pane
+2. A new window opens showing your staged changes
+3. Write a commit message: "Add module file"
+4. Click **Commit**
+
+You've made your first commit.
+
+### Now let's use the Terminal
+
+RStudio's GUI is convenient, but knowing the terminal commands matters. Open the Terminal (Tools -> Terminal -> New Terminal).
+
+```bash
+# Check status
+git status
+```
+
+Git shows a clean working directory. Your commit worked.
+
+```bash
+# View history
+git log --oneline
+```
+
+You'll see your commit with its message.
+
+### Make changes and commit via terminal
+
+Edit the module file: add a comment at the top, or change something small. Save it.
+
+```bash
+# See what changed
+git status
+git diff
+```
+
+`git diff` shows the exact lines that changed.
+
+```bash
+# Stage the file
+git add ohdsi-basics.qmd
+
+# Commit with a message
+git commit -m "Make edits to module"
+```
+
+### Compare: RStudio vs Terminal
+
+- **See changes:** Git pane shows icons, or `git status`
+- **Stage:** Check the box, or `git add <file>`
+- **Commit:** Click Commit button, or `git commit -m "msg"`
+- **View diff:** Click file in Commit window, or `git diff`
+- **History:** Click History, or `git log`
+
+Both work. Use whichever feels natural.
+
+### Key terminal commands
+
+- `git status`: See current state
+- `git add <file>`: Stage changes
+- `git commit -m "msg"`: Save snapshot
+- `git diff`: See unstaged changes
+- `git log`: View history
+
+### Connecting to GitHub
+
+When you're ready to backup to GitHub:
+
+1. Go to GitHub and create a new repository (don't initialize with README)
+2. Copy the repository URL
+
+In the terminal:
+
+```bash
+# Connect your local repo to GitHub
+git remote add origin https://github.com/YOUR-USERNAME/git-practice.git
+
+# Push your commits
+git push -u origin main
+```
+
+Or in RStudio: **Tools -> Project Options -> Git/SVN** and add the remote URL.
+
+After the first push, you can use:
+
+- Terminal: `git push` and `git pull`
+- RStudio: Push/Pull buttons in the Git pane
+
+### .gitignore
+
+Not everything belongs in Git. A `.gitignore` file tells Git which files to skip.
+
+Common things to ignore:
+
+- Large data files (`*.csv`, `*.rds`, `data/`)
+- Credentials and secrets (`.env`, `.Renviron`, `*.pem`)
+- Generated outputs (`*_files/`, `*.html`, `_site/`)
+- System junk (`.DS_Store`, `Thumbs.db`)
+
+Create a `.gitignore` file in your project root:
+
+```
+# Data files
+data/
+*.csv
+*.rds
+
+# Secrets
+.env
+.Renviron
+
+# Generated output
+*_files/
+*.html
+
+# System
+.DS_Store
+```
+
+RStudio projects create a default `.gitignore` for you. Open it and review what's already there.
+
+**Why this matters:** Without `.gitignore`, you might accidentally commit a 500MB data file or push database credentials to public GitHub.
+
+**Critical for biomedical work:** Patient data and PHI should never be committed to a Git repository. Once something is committed, it lives in the history forever, even if you delete the file later. Even "private" repositories can be misconfigured or leaked. Always ignore your `data/` folder and query data from databases rather than storing local copies.
+
+### Fetch vs Pull
+
+```bash
+git fetch   # Download changes from GitHub (don't merge yet)
+git pull    # Download AND merge changes
+```
+
+`fetch` lets you see what's new before merging. `pull` does both at once.
+
+### Clean up (optional)
+
+When you're done practicing, you can delete the `git-practice` folder from your Desktop.
+
+---
+
+## 2. OMOP CDM Schema Tour
+
+The OMOP Common Data Model defines the structure for healthcare data. Let's explore the official specification.
+
+### Browse the CDM Repository
+
+Open in your browser: <https://github.com/OHDSI/CommonDataModel>
+
+**Exploration tasks:**
+
+1. Navigate to `inst/ddl/5.4/` - these are the table definitions
+2. Open `postgresql/` and look at `OMOPCDM_postgresql_5.4_ddl.sql`
+3. Find the `CREATE TABLE person` statement
+4. What columns does the `person` table have?
+
+### CDM Table Relationships
+
+The CDM tables connect through `person_id` and `concept_id`:
+
+```{mermaid}
+erDiagram
+    PERSON ||--o{ OBSERVATION_PERIOD : has
+    PERSON ||--o{ VISIT_OCCURRENCE : has
+    PERSON ||--o{ CONDITION_OCCURRENCE : has
+    PERSON ||--o{ DRUG_EXPOSURE : has
+    PERSON ||--o{ PROCEDURE_OCCURRENCE : has
+    PERSON ||--o{ MEASUREMENT : has
+
+    VISIT_OCCURRENCE ||--o{ CONDITION_OCCURRENCE : contains
+    VISIT_OCCURRENCE ||--o{ DRUG_EXPOSURE : contains
+    VISIT_OCCURRENCE ||--o{ PROCEDURE_OCCURRENCE : contains
+    VISIT_OCCURRENCE ||--o{ MEASUREMENT : contains
+
+    CONCEPT ||--o{ CONDITION_OCCURRENCE : defines
+    CONCEPT ||--o{ DRUG_EXPOSURE : defines
+    CONCEPT ||--o{ PROCEDURE_OCCURRENCE : defines
+    CONCEPT ||--o{ MEASUREMENT : defines
+    CONCEPT ||--o{ PERSON : defines
+
+    PERSON {
+        int person_id PK
+        int gender_concept_id FK
+        int year_of_birth
+        int race_concept_id FK
+    }
+    VISIT_OCCURRENCE {
+        int visit_occurrence_id PK
+        int person_id FK
+        date visit_start_date
+        int visit_concept_id FK
+    }
+    CONDITION_OCCURRENCE {
+        int condition_occurrence_id PK
+        int person_id FK
+        int condition_concept_id FK
+        date condition_start_date
+    }
+    DRUG_EXPOSURE {
+        int drug_exposure_id PK
+        int person_id FK
+        int drug_concept_id FK
+        date drug_exposure_start_date
+    }
+    CONCEPT {
+        int concept_id PK
+        string concept_name
+        string domain_id
+        string vocabulary_id
+    }
+```
+
+### Key insight
+
+Everything connects through:
+
+- `person_id` -- links clinical events to a patient
+- `concept_id` -- standardizes meaning across vocabularies
+
+---
+
+## 3. Eunomia Setup & SQL Basics
+
+Eunomia is a synthetic OMOP CDM database we can query locally.
+
+### Install packages (if needed)
 
 ```{r}
 #| eval: false
+install.packages("DatabaseConnector")
 install.packages("Eunomia")
+install.packages("SqlRender")
 ```
-### Load packages and connect
+
+### Connect to Eunomia
 
 ```{r}
 #| eval: false
 library(DatabaseConnector)
 library(Eunomia)
-library(dplyr)
 
-# Get connection details for the Eunomia database
-# This downloads the sample data on first run
+# Get connection details (downloads data on first run)
 connectionDetails <- getEunomiaConnectionDetails()
 
 # Connect
 connection <- connect(connectionDetails)
 ```
 
-### Where does Eunomia live?
-
-Eunomia is just a SQLite file on your disk. Let's find it:
-
-```{r}
-#| eval: false
-# The connection details tell us where the database file is
-connectionDetails$server()
-
-# You can also find it directly
-eunomiaPath <- Eunomia::getDatabaseFile("GiBleed")
-eunomiaPath
-
-# Check the file exists and its size
-file.info(eunomiaPath)
-```
-This is a real file you can browse to in your file explorer. It's typically stored in your R library path under the Eunomia package directory.
-
-**Why this matters**: There's no magic. A SQLite database is just a file. When you query it, you're reading from this file. The same pattern applies to "real" databases---they're just files on a server somewhere.
-
-### What's in the database?
+### See what's in the database
 
 ```{r}
 #| eval: false
@@ -74,22 +331,20 @@ This is a real file you can browse to in your file explorer. It's typically stor
 getTableNames(connection, databaseSchema = "main")
 ```
 
-You'll see all the standard OMOP CDM tables: person, observation_period, visit_occurrence, condition_occurrence, drug_exposure, and more.
-
----
-
-## 2. Explore CDM Tables
-
-### The person table
+### Query the person table
 
 ```{r}
 #| eval: false
-querySql(connection, "SELECT * FROM main.person LIMIT 10")
+querySql(connection, "
+  SELECT *
+  FROM main.person
+  LIMIT 10
+")
 ```
 
-Notice the concept IDs for gender, race, ethnicity. These aren't human-readable yet.
+Notice the `concept_id` columns - these are codes, not human-readable names.
 
-### Join with concept to see names
+### Join with concept to decode
 
 ```{r}
 #| eval: false
@@ -97,8 +352,8 @@ querySql(connection, "
   SELECT
     p.person_id,
     p.year_of_birth,
-    g.concept_name as gender,
-    r.concept_name as race
+    g.concept_name AS gender,
+    r.concept_name AS race
   FROM main.person p
   LEFT JOIN main.concept g ON p.gender_concept_id = g.concept_id
   LEFT JOIN main.concept r ON p.race_concept_id = r.concept_id
@@ -106,321 +361,435 @@ querySql(connection, "
 ")
 ```
 
-### Demographic summary
+### Count patients by gender
 
 ```{r}
 #| eval: false
-# Count by gender
 querySql(connection, "
-  SELECT g.concept_name as gender, COUNT(*) as n
+  SELECT
+    g.concept_name AS gender,
+    COUNT(*) AS n_patients
   FROM main.person p
   LEFT JOIN main.concept g ON p.gender_concept_id = g.concept_id
   GROUP BY g.concept_name
 ")
 ```
 
-### Exercise: Age distribution
-
-```{r}
-#| eval: false
-# Calculate approximate current age and summarize
-querySql(connection, "
-  SELECT
-    (2024 - year_of_birth) / 10 * 10 as age_decade,
-    COUNT(*) as n
-  FROM main.person
-  GROUP BY age_decade
-  ORDER BY age_decade
-")
-```
-
-### Observation periods
-
-When do we have data on each person?
-
-```{r}
-#| eval: false
-querySql(connection, "
-  SELECT *
-  FROM main.observation_period
-  LIMIT 10
-")
-
-# How long are observation periods on average?
-querySql(connection, "
-  SELECT
-    AVG(julianday(observation_period_end_date) - julianday(observation_period_start_date)) as avg_days,
-    MIN(observation_period_start_date) as earliest,
-    MAX(observation_period_end_date) as latest
-  FROM main.observation_period
-")
-```
-
----
-
-## 3. Work with Concepts
-
-The concept table is the vocabulary backbone of OMOP.
-
-### Explore the concept table
-
-```{r}
-#| eval: false
-querySql(connection, "
-  SELECT concept_id, concept_name, domain_id, vocabulary_id, concept_class_id
-  FROM main.concept
-  LIMIT 20
-")
-```
-
-### Find concepts by name
-
-```{r}
-#| eval: false
-# Search for diabetes-related concepts
-querySql(connection, "
-  SELECT concept_id, concept_name, domain_id, vocabulary_id
-  FROM main.concept
-  WHERE LOWER(concept_name) LIKE '%diabetes%'
-  AND standard_concept = 'S'
-  LIMIT 20
-")
-```
-
-### Find all condition concepts used in the data
-
-```{r}
-#| eval: false
-querySql(connection, "
-  SELECT DISTINCT
-    c.concept_id,
-    c.concept_name,
-    c.vocabulary_id
-  FROM main.condition_occurrence co
-  JOIN main.concept c ON co.condition_concept_id = c.concept_id
-  ORDER BY c.concept_name
-  LIMIT 30
-")
-```
-
-### Count conditions
+### Find the most common conditions
 
 ```{r}
 #| eval: false
 querySql(connection, "
   SELECT
-    c.concept_name,
-    COUNT(*) as n_occurrences,
-    COUNT(DISTINCT co.person_id) as n_patients
+    c.concept_name AS condition,
+    COUNT(*) AS n_occurrences,
+    COUNT(DISTINCT co.person_id) AS n_patients
   FROM main.condition_occurrence co
   JOIN main.concept c ON co.condition_concept_id = c.concept_id
   GROUP BY c.concept_name
   ORDER BY n_patients DESC
-  LIMIT 20
+  LIMIT 15
 ")
 ```
 
-### Exercise: Explore drugs
+### Find the most common drugs
 
 ```{r}
 #| eval: false
-# What are the most common drugs?
 querySql(connection, "
   SELECT
-    c.concept_name as drug_name,
-    COUNT(*) as n_exposures,
-    COUNT(DISTINCT de.person_id) as n_patients
+    c.concept_name AS drug,
+    COUNT(*) AS n_exposures,
+    COUNT(DISTINCT de.person_id) AS n_patients
   FROM main.drug_exposure de
   JOIN main.concept c ON de.drug_concept_id = c.concept_id
   GROUP BY c.concept_name
   ORDER BY n_patients DESC
-  LIMIT 20
+  LIMIT 15
 ")
 ```
 
 ---
 
-## 4. Build Simple Cohorts
+## 4. SqlRender Across Databases
 
-A cohort is a set of persons meeting specific criteria for a period of time.
+OHDSI needs SQL that works on PostgreSQL, SQL Server, Oracle, and more. SqlRender translates.
 
-### Find persons with a specific condition
-
-Let's find persons with Type 2 diabetes (concept_id = 201826):
+### Load SqlRender
 
 ```{r}
 #| eval: false
-# First, verify the concept exists
-querySql(connection, "
-  SELECT concept_id, concept_name
-  FROM main.concept
-  WHERE concept_id = 201826
-")
-
-# Find all persons with this condition
-t2dm_patients <- querySql(connection, "
-  SELECT DISTINCT
-    co.person_id,
-    MIN(co.condition_start_date) as first_diagnosis
-  FROM main.condition_occurrence co
-  WHERE co.condition_concept_id = 201826
-  GROUP BY co.person_id
-")
-
-nrow(t2dm_patients)
-head(t2dm_patients)
+library(SqlRender)
 ```
 
-### Build a cohort table structure
+### The problem: SQL dialects differ
 
 ```{r}
 #| eval: false
-# Standard cohort format
-t2dm_cohort <- querySql(connection, "
-  SELECT
-    1 as cohort_definition_id,
-    co.person_id as subject_id,
-    MIN(co.condition_start_date) as cohort_start_date,
-    MIN(co.condition_start_date) as cohort_end_date
-  FROM main.condition_occurrence co
-  WHERE co.condition_concept_id = 201826
-  GROUP BY co.person_id
-")
+# SQL Server syntax for "top N rows"
+sql_server_style <- "SELECT TOP 10 * FROM person;"
 
-head(t2dm_cohort)
+# PostgreSQL uses LIMIT
+postgresql_style <- "SELECT * FROM person LIMIT 10;"
+
+# Oracle uses ROWNUM
+oracle_style <- "SELECT * FROM person WHERE ROWNUM <= 10;"
 ```
 
-### Cohort with drug exposure requirement
+Three ways to say the same thing!
 
-Persons with hypertension who are on ACE inhibitors:
+### SqlRender translates for you
 
 ```{r}
 #| eval: false
-# First find hypertension and ACE inhibitor concepts
-querySql(connection, "
-  SELECT concept_id, concept_name
-  FROM main.concept
-  WHERE LOWER(concept_name) LIKE '%hypertension%'
-  AND domain_id = 'Condition'
-  AND standard_concept = 'S'
-  LIMIT 10
-")
+# Write in OHDSI SQL (SQL Server-ish syntax)
+sql <- "SELECT TOP 10 * FROM person;"
 
-querySql(connection, "
-  SELECT concept_id, concept_name
-  FROM main.concept
-  WHERE LOWER(concept_name) LIKE '%lisinopril%'
-  AND domain_id = 'Drug'
-  LIMIT 10
-")
+# Translate to PostgreSQL
+translate(sql, targetDialect = "postgresql")
+
+# Translate to Oracle
+translate(sql, targetDialect = "oracle")
+
+# Translate to SQLite (what Eunomia uses)
+translate(sql, targetDialect = "sqlite")
 ```
+
+### Parameterization with @variables
 
 ```{r}
 #| eval: false
-# Now build the cohort (adjust concept IDs based on what you find)
-# This example uses placeholder IDs - replace with actual ones from your search
-htn_ace_cohort <- querySql(connection, "
-  SELECT DISTINCT
-    2 as cohort_definition_id,
-    co.person_id as subject_id,
-    co.condition_start_date as cohort_start_date,
-    co.condition_start_date as cohort_end_date
-  FROM main.condition_occurrence co
-  WHERE co.condition_concept_id IN (
-    SELECT concept_id FROM main.concept
-    WHERE LOWER(concept_name) LIKE '%hypertensive%'
-    AND standard_concept = 'S'
-  )
-  AND co.person_id IN (
-    SELECT DISTINCT person_id
-    FROM main.drug_exposure de
-    JOIN main.concept c ON de.drug_concept_id = c.concept_id
-    WHERE LOWER(c.concept_name) LIKE '%lisinopril%'
-  )
-")
+# Template SQL with parameters
+sql <- "
+SELECT *
+FROM @cdm_schema.person
+WHERE year_of_birth >= @min_year
+  AND year_of_birth <= @max_year
+"
 
-nrow(htn_ace_cohort)
+# Render with specific values
+render(sql,
+  cdm_schema = "main",
+  min_year = 1950,
+  max_year = 1970
+)
 ```
 
-### Exercise: Build your own cohort
+### Combine render + translate
 
 ```{r}
 #| eval: false
-# Task: Find persons with ANY condition who have at least 2 visits
-# Hint: Join condition_occurrence with visit_occurrence
+sql <- "
+SELECT TOP 100 *
+FROM @cdm_schema.condition_occurrence
+WHERE condition_concept_id = @concept_id
+"
 
-querySql(connection, "
-  SELECT
-    co.person_id,
-    COUNT(DISTINCT vo.visit_occurrence_id) as n_visits
-  FROM main.condition_occurrence co
-  JOIN main.visit_occurrence vo ON co.person_id = vo.person_id
-  GROUP BY co.person_id
-  HAVING COUNT(DISTINCT vo.visit_occurrence_id) >= 2
-  LIMIT 20
-")
+# Render parameters
+rendered <- render(sql,
+  cdm_schema = "main",
+  concept_id = 201826  # Type 2 diabetes
+)
+
+# Translate to target dialect
+translated <- translate(rendered, targetDialect = "sqlite")
+
+# Execute
+querySql(connection, translated)
 ```
+
+### Why this matters
+
+You write SQL once. SqlRender handles the differences between:
+
+- Your local SQLite (Eunomia)
+- Your institution's SQL Server
+- A collaborator's PostgreSQL
+- A cloud Redshift cluster
+
+This is how OHDSI runs the same study at 100+ sites.
 
 ---
 
-## 5. Explore OHDSI Packages
+## 5. Patient Odyssey
 
-### CommonDataModel
+Let's follow a single patient through the CDM and understand their healthcare journey.
 
-Contains the official DDL for all CDM tables.
-
-```{r}
-#| eval: false
-browseURL("https://github.com/OHDSI/CommonDataModel")
-
-# Questions to explore:
-# 1. How many tables are in CDM 5.4?
-# 2. What fields does observation_period have?
-# 3. What's the difference between condition_occurrence and condition_era?
-```
-
-### Strategus
-
-Orchestrates HADES package execution.
+### Find a patient with interesting data
 
 ```{r}
 #| eval: false
-browseURL("https://github.com/OHDSI/Strategus")
+# Find patients with multiple conditions and drugs
+interesting_patients <- querySql(connection, "
+  SELECT
+    p.person_id,
+    COUNT(DISTINCT co.condition_concept_id) AS n_conditions,
+    COUNT(DISTINCT de.drug_concept_id) AS n_drugs,
+    COUNT(DISTINCT vo.visit_occurrence_id) AS n_visits
+  FROM main.person p
+  LEFT JOIN main.condition_occurrence co ON p.person_id = co.person_id
+  LEFT JOIN main.drug_exposure de ON p.person_id = de.person_id
+  LEFT JOIN main.visit_occurrence vo ON p.person_id = vo.person_id
+  GROUP BY p.person_id
+  HAVING n_conditions > 5 AND n_drugs > 5
+  ORDER BY n_visits DESC
+  LIMIT 10
+")
 
-# Questions to explore:
-# 1. What is an "analysis specification"?
-# 2. What modules are available?
-# 3. How do results get stored?
+interesting_patients
 ```
 
-### Athena
+Pick a `person_id` from this list for our odyssey.
 
-Search for standard concepts online.
+### Get patient demographics
 
 ```{r}
 #| eval: false
-browseURL("https://athena.ohdsi.org")
+# Replace with your chosen person_id
+patient_id <- 1  # Use a real ID from above
 
-# Exercise:
-# 1. Search for "Type 2 diabetes mellitus"
-# 2. What's the standard concept ID?
-# 3. What vocabulary is it from?
-# 4. What ICD-10 codes map to it?
+querySql(connection, sprintf("
+  SELECT
+    p.person_id,
+    p.year_of_birth,
+    g.concept_name AS gender,
+    r.concept_name AS race
+  FROM main.person p
+  LEFT JOIN main.concept g ON p.gender_concept_id = g.concept_id
+  LEFT JOIN main.concept r ON p.race_concept_id = r.concept_id
+  WHERE p.person_id = %d
+", patient_id))
 ```
 
-### The Book of OHDSI
+### Get observation period
 
-Comprehensive guide to OHDSI methods.
+When do we have data on this patient?
 
 ```{r}
 #| eval: false
-browseURL("https://ohdsi.github.io/TheBookOfOhdsi/")
-
-# Chapters to bookmark:
-# - Chapter 4: The Common Data Model
-# - Chapter 6: Defining Cohorts
-# - Chapter 12: Population-Level Estimation
+querySql(connection, sprintf("
+  SELECT
+    observation_period_start_date,
+    observation_period_end_date
+  FROM main.observation_period
+  WHERE person_id = %d
+", patient_id))
 ```
+
+### Get their conditions
+
+```{r}
+#| eval: false
+patient_conditions <- querySql(connection, sprintf("
+  SELECT
+    co.condition_start_date,
+    c.concept_name AS condition,
+    c.concept_id,
+    v.concept_name AS visit_type
+  FROM main.condition_occurrence co
+  JOIN main.concept c ON co.condition_concept_id = c.concept_id
+  LEFT JOIN main.visit_occurrence vo ON co.visit_occurrence_id = vo.visit_occurrence_id
+  LEFT JOIN main.concept v ON vo.visit_concept_id = v.concept_id
+  WHERE co.person_id = %d
+  ORDER BY co.condition_start_date
+", patient_id))
+
+patient_conditions
+```
+### Get their drug exposures
+
+```{r}
+#| eval: false
+patient_drugs <- querySql(connection, sprintf("
+  SELECT
+    de.drug_exposure_start_date,
+    c.concept_name AS drug,
+    c.concept_id,
+    de.quantity,
+    de.days_supply
+  FROM main.drug_exposure de
+  JOIN main.concept c ON de.drug_concept_id = c.concept_id
+  WHERE de.person_id = %d
+  ORDER BY de.drug_exposure_start_date
+", patient_id))
+
+patient_drugs
+```
+
+### Visualize the patient timeline
+
+```{r}
+#| eval: false
+library(dplyr)
+library(ggplot2)
+
+# Combine conditions and drugs into a timeline
+conditions_timeline <- patient_conditions |>
+  select(date = CONDITION_START_DATE, event = CONDITION, type = "Condition")
+
+drugs_timeline <- patient_drugs |>
+  select(date = DRUG_EXPOSURE_START_DATE, event = DRUG, type = "Drug")
+
+timeline <- bind_rows(conditions_timeline, drugs_timeline) |>
+  mutate(date = as.Date(date)) |>
+  arrange(date)
+
+# Plot
+ggplot(timeline, aes(x = date, y = event, color = type)) +
+  geom_point(size = 3) +
+  labs(
+    title = sprintf("Patient %d Healthcare Timeline", patient_id),
+    x = "Date",
+    y = "",
+    color = "Event Type"
+  ) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 8))
+```
+
+### Patient data flow diagram
+
+This shows how a patient's data connects across CDM tables:
+
+```{mermaid}
+flowchart TD
+    subgraph Patient Record
+        P[person<br/>Demographics]
+    end
+
+    subgraph Time Boundaries
+        OP[observation_period<br/>When we have data]
+    end
+
+    subgraph Clinical Events
+        V[visit_occurrence<br/>Encounters]
+        CO[condition_occurrence<br/>Diagnoses]
+        DE[drug_exposure<br/>Medications]
+        PR[procedure_occurrence<br/>Procedures]
+        ME[measurement<br/>Labs & Vitals]
+    end
+
+    subgraph Vocabulary
+        C[concept<br/>Standardized meanings]
+    end
+
+    P --> OP
+    P --> V
+    V --> CO
+    V --> DE
+    V --> PR
+    V --> ME
+
+    CO -.-> |condition_concept_id| C
+    DE -.-> |drug_concept_id| C
+    PR -.-> |procedure_concept_id| C
+    ME -.-> |measurement_concept_id| C
+    P -.-> |gender_concept_id| C
+
+    style P fill:#e1f5fe
+    style C fill:#fff9c4
+```
+
+### Questions to explore
+
+1. Does this patient have conditions that match their drug exposures? (e.g., diabetes + metformin)
+2. What's the time gap between diagnosis and first treatment?
+3. Are there any emergency visits? What happened?
+
+---
+
+## 6. ATLAS Cohort Definitions
+
+ATLAS is OHDSI's web-based tool for defining cohorts and analyses. Let's see how cohorts translate to SQL.
+
+### Access the ATLAS demo
+
+Open in your browser: <https://atlas-demo.ohdsi.org>
+
+*(Note: This is a public demo instance - no real patient data)*
+
+### Explore existing cohort definitions
+
+1. Click **Cohort Definitions** in the left menu
+2. Browse the existing cohorts
+3. Click on one to see its definition
+
+### Anatomy of a cohort definition
+
+A cohort has:
+
+- **Entry criteria**: How does someone enter the cohort?
+- **Inclusion criteria**: Additional requirements to stay in
+- **Exit criteria**: When does someone leave the cohort?
+
+### View the generated SQL
+
+In any cohort definition:
+
+1. Click the **Export** tab
+2. Select **SQL** format
+3. See the generated SQL code
+
+This SQL can run on any OMOP CDM database!
+
+### Example: Type 2 Diabetes cohort
+
+A simple T2DM cohort might have:
+
+**Entry criteria:**
+- First diagnosis of Type 2 diabetes (concept 201826)
+
+**Inclusion criteria:**
+- Age ≥ 18 at diagnosis
+- At least 365 days of prior observation
+
+**Exit criteria:**
+- End of observation period
+
+### The generated SQL
+
+ATLAS generates complex SQL that:
+
+1. Finds all qualifying entry events
+2. Applies inclusion criteria
+3. Handles overlapping periods
+4. Outputs the standard cohort format
+
+```sql
+-- Simplified example of what ATLAS generates
+INSERT INTO cohort (
+  cohort_definition_id,
+  subject_id,
+  cohort_start_date,
+  cohort_end_date
+)
+SELECT
+  1 AS cohort_definition_id,
+  person_id AS subject_id,
+  condition_start_date AS cohort_start_date,
+  observation_period_end_date AS cohort_end_date
+FROM condition_occurrence co
+JOIN observation_period op ON co.person_id = op.person_id
+WHERE condition_concept_id = 201826
+  AND DATEDIFF(year, birth_datetime, condition_start_date) >= 18
+  AND DATEDIFF(day, observation_period_start_date, condition_start_date) >= 365
+```
+
+### Why this matters
+
+- **Reproducibility**: The SQL precisely defines who's in the cohort
+- **Portability**: Run the same definition at any OHDSI site
+- **Transparency**: Review and audit the exact criteria
+
+### Exercise: Build your own
+
+In ATLAS demo:
+
+1. Click **New Cohort Definition**
+2. Name it "Practice - [Your Name]"
+3. Add an initial event (try a condition)
+4. Add an inclusion criterion
+5. Export and examine the SQL
 
 ---
 
@@ -433,16 +802,33 @@ disconnect(connection)
 
 ---
 
-## Wrap-up
+## Summary
 
-Today we:
+Today we covered:
 
-1. Connected to a real OMOP CDM using Eunomia
-2. Explored core tables: person, observation_period, condition_occurrence, drug_exposure
-3. Learned how concepts provide standardized vocabulary
-4. Built simple cohorts with SQL
-5. Explored key OHDSI resources
+- **Git:** Create repos, stage, commit, push/pull
+- **CDM Schema:** Table structure, relationships via person_id and concept_id
+- **Eunomia:** Local CDM practice, SQL queries
+- **SqlRender:** Dialect translation for multi-site compatibility
+- **Patient Odyssey:** Following one patient through connected tables
+- **ATLAS:** Visual cohort building to SQL generation
 
-**Key takeaway**: The CDM standardizes structure, concepts standardize meaning. Eunomia gives you a safe sandbox to learn.
+### Key takeaways
 
-Next: Deeper dive into cohort definitions and HADES packages.
+1. **Git** tracks your code history - use it for every project
+2. **Remote databases** solve scale, security, and collaboration problems
+3. **OHDSI's SQL tools** let you write once, run anywhere
+4. The **CDM connects** through `person_id` and `concept_id`
+5. **ATLAS** translates visual cohort definitions to executable SQL
+
+### Resources
+
+- Git tutorial: <https://git-scm.com/book/en/v2>
+- OMOP CDM docs: <https://ohdsi.github.io/CommonDataModel/>
+- SqlRender: <https://ohdsi.github.io/SqlRender/>
+- ATLAS demo: <https://atlas-demo.ohdsi.org>
+- The Book of OHDSI: <https://ohdsi.github.io/TheBookOfOhdsi/>
+
+### Next session
+
+We'll dive deeper into cohort definitions and start working with HADES packages for analysis.

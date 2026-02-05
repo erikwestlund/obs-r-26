@@ -1,256 +1,464 @@
 ---
-title: "OHDSI Basics"
-subtitle: "The Common Data Model and HADES (Provisional)"
+title: "Git, Databases, and OHDSI's SQL Strategy"
+subtitle: "Session 3: Working with Version Control and Data Infrastructure"
 format: revealjs
 ---
 
-## Today's Goal
+## Today's Agenda
 
-Understand the OMOP Common Data Model and how OHDSI tools work with it.
+1. **Git & GitHub**: Version control fundamentals
+2. **Remote Databases**: Why they matter in informatics
+3. **OHDSI's SQL Approach**: DatabaseConnector, SqlRender, Andromeda
 
 . . .
 
-Jumpstart for exploring CDM data.
+Then: Hands-on practice in the module.
 
-## What is OHDSI?
+# Part 1: Git & GitHub
 
-**Observational Health Data Sciences and Informatics**
+## What is Git?
 
-- Open science community
-- Standardized data model (OMOP CDM)
-- Open source tools (HADES)
-- Network studies across institutions
+**Version control** allows for tracking changes to files over time.
 
-<https://ohdsi.org>
+- Take "snapshots" of your project (commits)
+- Go back to any previous state
+- See who changed what and when
+- Work on features without breaking main code
 
-## The Problem OHDSI Solves
+Git is local software on your machine.
 
-Every hospital has different:
+## What is GitHub?
 
-- Database systems
-- Table structures
-- Coding systems (ICD-9, ICD-10, SNOMED, etc.)
-- Variable names
+**GitHub** is basically cloud storage for Git repositories.
 
-How do you run the same analysis at multiple sites?
+- Backup your work remotely
+- Share code with collaborators
+- Host websites, documentation
 
-## The Solution: OMOP CDM
+GitHub is a website that stores Git repositories.
 
-**Common Data Model** = standardized structure
+## Why Version Control Matters
 
-- Same tables everywhere
-- Same column names
-- Same coding system (concepts)
-
-Write code once, run anywhere.
-
-## CDM Core Tables
-
-| Table | What it stores |
-|-------|----------------|
-| `person` | Demographics (birth year, gender, race) |
-| `observation_period` | When we have data on each person |
-| `visit_occurrence` | Healthcare encounters |
-| `condition_occurrence` | Diagnoses |
-| `drug_exposure` | Medications |
-| `procedure_occurrence` | Procedures performed |
-| `measurement` | Lab results, vitals |
-
-## The person Table
-
-```sql
-SELECT person_id, year_of_birth, gender_concept_id
-FROM person
-LIMIT 5;
-```
-
-| person_id | year_of_birth | gender_concept_id |
-|-----------|---------------|-------------------|
-| 1 | 1985 | 8507 |
-| 2 | 1990 | 8532 |
-| 3 | 1978 | 8532 |
-
-What is `8507`? What is `8532`?
-
-## Concepts
-
-Everything in OMOP uses **concept IDs** instead of raw codes.
-
-| concept_id | concept_name | domain |
-|------------|--------------|--------|
-| 8507 | Male | Gender |
-| 8532 | Female | Gender |
-| 317898 | Heart failure | Condition |
-| 1124300 | Metformin | Drug |
-
-## The concept Table
-
-```sql
-SELECT concept_id, concept_name, domain_id, vocabulary_id
-FROM concept
-WHERE concept_id = 317898;
-```
-
-| concept_id | concept_name | domain_id | vocabulary_id |
-|------------|--------------|-----------|---------------|
-| 317898 | Heart failure | Condition | SNOMED |
-
-Concepts are the **lingua franca** of OMOP.
-
-## Vocabulary Mapping
-
-ICD-10: `I50.9` (Heart failure, unspecified)
-
-↓ mapped to ↓
-
-SNOMED: `317898` (Heart failure)
-
-Different source codes → same standard concept.
-
-## condition_occurrence
-
-```sql
-SELECT person_id, condition_concept_id, condition_start_date
-FROM condition_occurrence
-WHERE person_id = 1;
-```
-
-| person_id | condition_concept_id | condition_start_date |
-|-----------|---------------------|---------------------|
-| 1 | 317898 | 2020-03-15 |
-| 1 | 320128 | 2020-03-15 |
-
-## drug_exposure
-
-```sql
-SELECT person_id, drug_concept_id, drug_exposure_start_date
-FROM drug_exposure
-WHERE person_id = 1;
-```
-
-| person_id | drug_concept_id | drug_exposure_start_date |
-|-----------|-----------------|--------------------------|
-| 1 | 1124300 | 2020-03-15 |
-| 1 | 1308216 | 2020-03-20 |
-
-## Joining Tables
-
-Find all conditions for people on Metformin:
-
-```sql
-SELECT DISTINCT c.condition_concept_id, co.concept_name
-FROM drug_exposure d
-JOIN condition_occurrence c ON d.person_id = c.person_id
-JOIN concept co ON c.condition_concept_id = co.concept_id
-WHERE d.drug_concept_id = 1124300
-```
-
-## Cohorts
-
-A **cohort** is a set of persons who satisfy a set of criteria for a duration of time.
-
-- Entry criteria (how do you get in?)
-- Exit criteria (when do you leave?)
-- Inclusion/exclusion criteria
-
-Stored in a cohort table: `(cohort_definition_id, subject_id, cohort_start_date, cohort_end_date)`
-
-## HADES
-
-**Health Analytics Data-to-Evidence Suite**
-
-Collection of R packages for working with OMOP data:
-
-- `DatabaseConnector`: Database access
-- `SqlRender`: SQL translation
-- `Capr`: Cohort definition in R
-- `CohortGenerator`: Create cohorts
-- `CohortDiagnostics`: Validate cohorts
-- `CohortMethod`: Comparative effectiveness
-
-## Strategus
-
-**Orchestration layer** for HADES packages.
-
-Instead of running each package separately:
-
-1. Define your analysis specification
-2. Strategus coordinates execution
-3. Results aggregated automatically
-
-<https://github.com/OHDSI/Strategus>
-
-## Strategus Workflow
+Without Git:
 
 ```
-Analysis Specification (JSON)
-         ↓
-    Strategus
-         ↓
-  ┌──────┴──────┐
-  ↓      ↓      ↓
-Cohort  Char.  CohortMethod
-Gen.
-  └──────┬──────┘
-         ↓
-    Results Database
+analysis_v1.R
+analysis_v2.R
+analysis_v2_final.R
+analysis_v2_final_REALLY_FINAL.R
+analysis_v2_final_REALLY_FINAL_fixed.R
 ```
 
-## Why Strategus?
+. . .
 
-- **Reproducibility**: Specification captures everything
-- **Portability**: Run same analysis at multiple sites
-- **Coordination**: Handles dependencies between packages
-- **Results management**: Structured output
+With Git:
 
-## CDM Exploration Pattern
+```
+analysis.R  (with full history)
+```
+
+## A Pragmatic View
+
+For most researchers, Git is essentially:
+
+**Cloud backup with time travel.**
+
+. . .
+
+- Your code is safe on GitHub
+- You can recover any previous version
+- You have a record of what changed and when
+
+. . .
+
+Git allows for fancy branching and merging workflows, but you probably won't need them for scientific work.
+
+## The Basic Git Workflow
+
+```
+Working Directory → Staging Area → Repository
+     (edit)           (add)         (commit)
+```
+
+1. **Edit** files in your working directory
+2. **Stage** changes you want to save (`git add`)
+3. **Commit** staged changes to history (`git commit`)
+
+## Key Commands: Local
+
+| Command | What it does |
+|---------|--------------|
+| `git init` | Create a new repo |
+| `git status` | See what's changed |
+| `git add <file>` | Stage a file |
+| `git commit -m "msg"` | Save staged changes |
+| `git log` | View commit history |
+
+## Key Commands: Remote
+
+| Command | What it does |
+|---------|--------------|
+| `git remote add origin <url>` | Link to GitHub |
+| `git push` | Upload commits to GitHub |
+| `git pull` | Download changes from GitHub |
+| `git fetch` | Check for remote changes |
+| `git clone <url>` | Copy a repo from GitHub |
+
+## The Commit Message
+
+Good commit messages:
+
+- "Add data cleaning function for labs"
+- "Fix bug in age calculation"
+- "Update analysis with new cohort criteria"
+
+Bad commit messages:
+
+- "stuff"
+- "fixed it"
+- "asdfasdf"
+
+## Branching (Preview)
+
+OHDSI packages typically use:
+
+```
+main:      A───────────F───G
+            \         /
+develop:    B───C───D───E
+                 \
+feature:          X───Y
+```
+
+- `main`: stable releases (what you install)
+- `develop`: what's in the pipeline/what people are working on
+- `feature`: specific new functionality
+
+Check `develop` to see what's coming next.
+
+## .gitignore
+
+Not everything should be tracked. Create a `.gitignore` file to exclude:
+
+- Large data files (`*.csv`, `*.rds`)
+- Sensitive credentials (`.env`, `*.pem`)
+- Generated outputs (`*_files/`, `*.html`)
+- System files (`.DS_Store`, `Thumbs.db`)
+
+```
+# Example .gitignore
+data/
+*.csv
+.env
+.Renviron
+```
+
+## Why .gitignore Matters
+
+Without it:
+
+- Accidentally commit 500MB data files
+- Push credentials to public GitHub
+- Clutter history with generated files
+
+RStudio projects include a sensible `.gitignore` by default. Review it.
+
+## .gitignore and PHI
+
+In biomedical work, this is not optional.
+
+- Patient data should **never** be in a Git repository
+- Once committed, data lives in history forever
+- Even "private" repos can leak
+
+Always ignore your `data/` folder. Query data from databases instead of storing local copies.
+
+# Part 2: Remote Databases
+
+## Why Not Just Use Files?
+
+Typical stats training/work uses CSVs and Excel files, so why do we need databases?
+
+## Scale Problem
+
+A single CSV with 100 million rows:
+
+- Takes forever to load into R
+- Uses all your RAM
+- R crashes
+
+. . .
+
+A database with 100 million rows:
+
+- Loads only what you query
+- Processes on the server
+- Your laptop stays happy
+
+## Multi-User Problem
+
+CSV files:
+
+- One person edits at a time
+- "Who has the latest version?"
+- Overwrite conflicts
+
+. . .
+
+Databases:
+
+- Many users simultaneously
+- Single source of truth
+- Transaction safety (ACID)
+
+::: {.notes}
+ACID = Atomicity, Consistency, Isolation, Durability
+:::
+
+## ACID Properties
+
+Databases guarantee safe transactions:
+
+| Property | Meaning |
+|----------|---------|
+| **A**tomicity | All or nothing (no partial writes) |
+| **C**onsistency | Data stays valid after each transaction |
+| **I**solation | Concurrent users don't interfere |
+| **D**urability | Committed data survives crashes |
+
+CSVs have none of these.
+
+## Security Problem
+
+CSV on a shared drive:
+
+- Anyone can copy the whole thing
+- No audit trail
+- PHI everywhere
+
+. . .
+
+Database:
+
+- Fine-grained access control
+- Query logging
+- Data stays on server
+
+## Real World: Healthcare Data
+
+* Claims data: **billions** of records
+* EHR data: **tens of millions** of patients
+* Genomics data: **petabytes**
+
+This doesn't fit on your laptop.
+
+## The Pattern
+
+```
+Your laptop          Server
+┌──────────┐        ┌──────────┐
+│ R Code   │ ─SQL─→ │ Database │
+│          │ ←rows─ │  Server  │
+└──────────┘        └──────────┘
+```
+
+Write query → Send to server → Get results back
+
+## Common Database Systems
+
+| Database | Common Use |
+|----------|------------|
+| PostgreSQL | General purpose, OHDSI standard |
+| SQL Server | Common with "enterprise" systems |
+| Oracle | Enterprise, legacy systems |
+| SQLite | Local files, prototyping |
+| Redshift/Snowflake | Cloud analytics |
+| Spark | Distributed processing (Databricks) |
+
+They all speak SQL (with dialects).
+
+## Databricks and Spark
+
+**Databricks** = managed cloud platform built on Apache Spark.
+
+- Processes massive datasets across many machines
+- Uses "Spark SQL" dialect
+- Increasingly common for health system data; JH is transitioning to it.
+
+. . .
+
+DatabaseConnector supports Spark, so the same OHDSI code works here too.
+
+# Part 3: OHDSI's SQL Strategy
+
+## The OHDSI Problem
+
+OHDSI runs the same analysis at:
+
+- Hospital A: PostgreSQL
+- Hospital B: SQL Server
+- Hospital C: Oracle
+- Hospital D: Redshift
+
+. . .
+
+How do you write code that works everywhere?
+
+## Solution 1: DatabaseConnector
+
+**Unified database interface** for R.
 
 ```r
 library(DatabaseConnector)
 
+# Works with any supported database
+connectionDetails <- createConnectionDetails(
+  dbms = "postgresql",  # or "sql server", "oracle", etc.
+  server = "hostname",
+  user = "username",
+  password = "password"
+)
+
 connection <- connect(connectionDetails)
+```
 
-# Query the CDM
-persons <- querySql(connection, "
-  SELECT * FROM person LIMIT 100
-")
+## DatabaseConnector in Action
 
-conditions <- querySql(connection, "
-  SELECT c.*, co.concept_name
-  FROM condition_occurrence c
-  JOIN concept co ON c.condition_concept_id = co.concept_id
+```r
+# Same code, any database
+result <- querySql(connection, "
+  SELECT person_id, year_of_birth
+  FROM person
   LIMIT 100
 ")
 
+# Clean up
 disconnect(connection)
 ```
 
-## Finding Concepts
+One interface, many backends.
 
-Use Athena to search for concepts:
+## Solution 2: SqlRender
 
-<https://athena.ohdsi.org>
+**SQL dialect translation.**
 
-Search for "heart failure" → find concept IDs → use in queries.
+```r
+library(SqlRender)
+
+# Write SQL once
+sql <- "SELECT TOP 100 * FROM person;"
+
+# Translate to different dialects
+render(sql, targetDialect = "postgresql")
+# → "SELECT * FROM person LIMIT 100;"
+
+render(sql, targetDialect = "oracle")
+# → "SELECT * FROM person WHERE ROWNUM <= 100;"
+```
+
+## SqlRender: Parameterization
+
+```r
+sql <- "
+SELECT * FROM @cdm_schema.person
+WHERE year_of_birth > @min_year
+"
+
+render(sql,
+  cdm_schema = "cdm_v5",
+  min_year = 1980)
+
+# → SELECT * FROM cdm_v5.person
+#   WHERE year_of_birth > 1980
+```
+
+Write flexible SQL, fill in values at runtime.
+
+## The Reality of SQL Translation
+
+SqlRender is useful, but not magic.
+
+- Some dialect features don't have equivalents
+- Edge cases and complex queries can fail
+- Date/time functions are particularly tricky
+- Performance characteristics differ across platforms
+
+**In practice:** Test your queries on the actual target database. Don't assume translation "just works."
+
+## Solution 3: Andromeda
+
+**Local analytics on big data.**
+
+Problem: Can't load 100M rows into R.
+
+Solution: Andromeda wraps SQLite for out-of-memory processing.
+
+```r
+library(Andromeda)
+
+# Create local database
+andr <- andromeda()
+
+# Add big data (stays on disk)
+andr$patients <- huge_dataframe
+
+# Query it like dplyr
+andr$patients |> filter(age > 65) |> collect()
+```
+
+## The OHDSI Stack
+
+```
+┌─────────────────────────────────┐
+│     Your Analysis Code (R)      │
+├─────────────────────────────────┤
+│  SqlRender (dialect translation)│
+├─────────────────────────────────┤
+│ DatabaseConnector (connections) │
+├─────────────────────────────────┤
+│ PostgreSQL │ SQL Server │ Oracle│
+└─────────────────────────────────┘
+```
+
+## Why This Matters
+
+Write once, run anywhere:
+
+- Your code works at your site
+- Same code works at collaborator's site
+- Network studies become possible
+
+This is how OHDSI studies run at multiple sites.
+
+## Eunomia: Test Data
+
+**Eunomia** = sample OMOP CDM in SQLite
+
+- Synthetic patient data
+- Full CDM structure
+- Runs locally, no server needed
+
+Userful for testing and learning before touching real data.
 
 ## Summary
 
-1. **OMOP CDM** standardizes healthcare data structure
-2. **Concepts** provide a common vocabulary
-3. **Core tables**: person, condition, drug, procedure, measurement
-4. **Cohorts** define populations for study
-5. **HADES** packages work with CDM data
-6. **Strategus** orchestrates complex analyses
-
-## Resources
-
-- OMOP CDM: <https://ohdsi.github.io/CommonDataModel/>
-- The Book of OHDSI: <https://ohdsi.github.io/TheBookOfOhdsi/>
-- Athena (concept search): <https://athena.ohdsi.org>
-- HADES: <https://ohdsi.github.io/Hades/>
+| Tool | Purpose |
+|------|---------|
+| Git/GitHub | Track code changes, collaborate |
+| Remote databases | Handle scale, security, multi-user |
+| DatabaseConnector | Unified R database interface |
+| SqlRender | SQL dialect translation |
+| Andromeda | Local big-data processing |
+| Eunomia | Safe practice environment |
 
 ## Next
 
-Hands-on CDM exploration in the module.
+Hands-on:
+
+1. Create and use a Git repository
+2. Connect to Eunomia
+3. Query CDM tables with SQL
+4. Follow a patient through the data
+5. Explore ATLAS cohort definitions
 
 `modules/03_ohdsi-basics/ohdsi-basics.qmd`
