@@ -1,0 +1,260 @@
+---
+title: "The OMOP CDM and Cohort Definitions"
+subtitle: "Session 4: The Building Blocks of OHDSI Studies"
+format: revealjs
+---
+
+## Today's Agenda
+
+1. **OMOP CDM Review**: Quick refresher on the data model
+2. **Cohorts in OHDSI**: The connective tissue of studies
+3. **Hands-on**: Exploring cohort definitions and naive diagnostics
+
+Then: **Cohort Diagnostics** with your colleague.
+
+# Part 1: OMOP CDM Review
+
+## The Problem
+
+Every hospital stores data differently.
+
+- Hospital A: Custom EHR schema
+- Hospital B: Claims data format
+- Hospital C: Epic extraction
+- Hospital D: Vendor-specific warehouse
+
+How do you run the **same study** across all of them?
+
+## The Solution: OMOP CDM
+
+**Common Data Model** = one standard structure for all sites.
+
+Each site transforms their data into OMOP format. Then the same code works everywhere.
+
+```
+Hospital A data ──→ OMOP CDM ──┐
+Hospital B data ──→ OMOP CDM ──┤──→ Same analysis code
+Hospital C data ──→ OMOP CDM ──┘
+```
+
+## Core Clinical Tables
+
+| Table | Contains |
+|-------|----------|
+| `person` | Demographics (birth year, gender, race) |
+| `observation_period` | When we have data on each person |
+| `visit_occurrence` | Healthcare encounters |
+| `condition_occurrence` | Diagnoses |
+| `drug_exposure` | Medications |
+| `procedure_occurrence` | Procedures |
+| `measurement` | Labs and vitals |
+
+Everything links through `person_id`.
+
+## The Vocabulary System
+
+Raw codes differ across systems:
+
+| System | Diabetes Code |
+|--------|---------------|
+| ICD-10-CM | E11.9 |
+| SNOMED | 201826 |
+| Read | C10F. |
+
+OMOP maps all of these to **standard concepts**.
+
+`concept_id = 201826` → "Type 2 diabetes mellitus"
+
+The `concept` table is the Rosetta Stone of the CDM.
+
+## How It All Connects
+
+Two keys unlock the whole CDM:
+
+- **`person_id`** connects clinical events to patients
+- **`concept_id`** standardizes meaning across vocabularies
+
+
+## Eunomia: Our Practice CDM
+
+Last session, we set up **Eunomia**: a synthetic OMOP CDM in SQLite.
+
+- ~2,700 synthetic patients
+- Full CDM structure
+- Runs locally, no server needed
+
+Today we'll use it to explore **cohort definitions**.
+
+# Part 2: Cohorts in OHDSI
+
+## What is a Cohort?
+
+A **cohort** is a set of persons who satisfy one or more criteria for a duration of time.
+
+Each person in a cohort has:
+
+- A **start date** (when they entered)
+- An **end date** (when they left)
+
+*"All persons with a first diagnosis of T2DM, aged ≥18, with ≥365 days of prior observation."*
+
+## The Cohort Table
+
+Every cohort produces the same simple output:
+
+| cohort_definition_id | subject_id | cohort_start_date | cohort_end_date |
+|---------------------|------------|-------------------|-----------------|
+| 1 | 42 | 2015-03-15 | 2020-12-31 |
+| 1 | 108 | 2017-06-22 | 2019-08-14 |
+| 2 | 42 | 2016-01-10 | 2020-12-31 |
+
+It's just four columns.
+
+## Cohorts are the Connective Tissue
+
+Every OHDSI analysis starts with a cohort definition:
+
+- **Characterization**: Who is in this cohort? What are their features?
+- **Population-Level Estimation**: Compare outcomes between two cohorts
+- **Patient-Level Prediction**: Predict who will enter a cohort
+
+. . .
+
+No cohort definition → no OHDSI study.
+
+## Creating Cohort Definitions
+
+Two main tools:
+
+| Tool | Type | Best For |
+|------|------|----------|
+| **ATLAS** | Web GUI | Interactive exploration, visual building |
+| **Capr** | R package | Programmatic, version-controlled definitions |
+
+Both produce the same output.
+
+## Anatomy of a Cohort Definition
+
+A cohort definition specifies three things:
+
+1. **Entry criteria**: What event qualifies someone to enter?
+2. **Inclusion criteria**: What additional filters narrow the population?
+3. **Exit criteria**: When does someone leave the cohort?
+
+. . .
+
+This logic gets represented in two formats.
+
+## Two Representations, One Definition
+
+**JSON** is the the portable specification
+
+- Machine-readable
+- Maybe a little more human readable
+- Declarative: describes *what*, not *how*
+- Used by Strategus for study orchestration
+
+. . .
+
+**SQL** is an executable implementation
+
+- Actually queries the database
+- Generated from the JSON
+- Dialect-specific (SQL Server, PostgreSQL, etc.)
+
+## The Interface Pattern
+
+If you've seen interfaces in software, this is the same idea:
+
+```
+Cohort Definition (abstract specification)
+    │
+    ├── JSON (portable format)
+    │     Used by: Strategus, ATLAS, study packages
+    │
+    └── SQL (executable format)
+          Used by: CohortGenerator → database
+```
+
+One specification, multiple implementations.
+
+## JSON: The Specification
+
+```json
+{
+  "ConceptSets": [{
+    "id": 0,
+    "name": "Type 2 DM",
+    "expression": {
+      "items": [{
+        "concept": {
+          "CONCEPT_ID": 201826,
+          "CONCEPT_NAME": "Type 2 diabetes mellitus"
+        }
+      }]
+    }
+  }],
+  "PrimaryCriteria": { "..." },
+  "QualifiedLimit": { "..." }
+}
+```
+
+Describes the cohort logic declaratively.
+
+## SQL: The Implementation
+
+```sql
+INSERT INTO @target_cohort_table (
+  cohort_definition_id, subject_id,
+  cohort_start_date, cohort_end_date
+)
+SELECT @target_cohort_id AS cohort_definition_id,
+       person_id AS subject_id,
+       condition_start_date AS cohort_start_date,
+       op.observation_period_end_date AS cohort_end_date
+FROM condition_occurrence co
+JOIN observation_period op
+  ON co.person_id = op.person_id
+WHERE condition_concept_id IN (
+  SELECT concept_id FROM @concept_set_0
+)
+```
+
+Actually runs against the database.
+
+## Why Two Formats?
+
+**JSON** is better for:
+
+- Sharing between tools and sites
+- Version control (readable diffs)
+- Automated study orchestration
+
+**SQL** is better for:
+
+- Direct database execution
+- Understanding exactly what's queried
+- Performance tuning
+
+OHDSI tools convert between them automatically.
+
+## Cohort Diagnostics: Preview
+
+Once you have a cohort definition, you need to verify it.
+
+- Is the cohort the right size?
+- Do the demographics look right?
+- How does incidence change over time?
+- Does it look similar across databases?
+
+**CohortDiagnostics** automates these checks. Your colleague will walk you through it after our notebook work.
+
+# Hands-on
+
+## Next: Module Work
+
+1. Pull actual cohort definitions and examine the JSON + SQL
+2. Build naive cohort diagnostics with dplyr
+3. See why CohortDiagnostics exists
+
+`modules/04_cohorts/cohorts.qmd`

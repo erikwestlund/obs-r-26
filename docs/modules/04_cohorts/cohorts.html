@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Module 03: Git, SQL, and the OMOP CDM</title>
+<title>Module 04: Cohort Definitions and Diagnostics</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -2208,78 +2208,22 @@ vertical-align: -.125em;
    
   <ul>
   <li><a href="#agenda" id="toc-agenda" class="nav-link active" data-scroll-target="#agenda">Agenda</a></li>
-  <li><a href="#git-practice" id="toc-git-practice" class="nav-link" data-scroll-target="#git-practice">1. Git Practice</a>
+  <li><a href="#exploring-the-omop-cdm" id="toc-exploring-the-omop-cdm" class="nav-link" data-scroll-target="#exploring-the-omop-cdm">1. Exploring the OMOP CDM</a>
   <ul class="collapse">
-  <li><a href="#create-a-new-rstudio-project" id="toc-create-a-new-rstudio-project" class="nav-link" data-scroll-target="#create-a-new-rstudio-project">Create a new RStudio Project</a></li>
-  <li><a href="#initialize-git-via-terminal" id="toc-initialize-git-via-terminal" class="nav-link" data-scroll-target="#initialize-git-via-terminal">Initialize Git via terminal</a></li>
-  <li><a href="#copy-this-module-file" id="toc-copy-this-module-file" class="nav-link" data-scroll-target="#copy-this-module-file">Copy this module file</a></li>
-  <li><a href="#explore-rstudios-git-pane" id="toc-explore-rstudios-git-pane" class="nav-link" data-scroll-target="#explore-rstudios-git-pane">Explore RStudio’s Git pane</a></li>
-  <li><a href="#stage-using-rstudio" id="toc-stage-using-rstudio" class="nav-link" data-scroll-target="#stage-using-rstudio">Stage using RStudio</a></li>
-  <li><a href="#commit-using-rstudio" id="toc-commit-using-rstudio" class="nav-link" data-scroll-target="#commit-using-rstudio">Commit using RStudio</a></li>
-  <li><a href="#now-lets-use-the-terminal" id="toc-now-lets-use-the-terminal" class="nav-link" data-scroll-target="#now-lets-use-the-terminal">Now let’s use the Terminal</a></li>
-  <li><a href="#make-changes-and-commit-via-terminal" id="toc-make-changes-and-commit-via-terminal" class="nav-link" data-scroll-target="#make-changes-and-commit-via-terminal">Make changes and commit via terminal</a></li>
-  <li><a href="#compare-rstudio-vs-terminal" id="toc-compare-rstudio-vs-terminal" class="nav-link" data-scroll-target="#compare-rstudio-vs-terminal">Compare: RStudio vs Terminal</a></li>
-  <li><a href="#key-terminal-commands" id="toc-key-terminal-commands" class="nav-link" data-scroll-target="#key-terminal-commands">Key terminal commands</a></li>
-  <li><a href="#connecting-to-github" id="toc-connecting-to-github" class="nav-link" data-scroll-target="#connecting-to-github">Connecting to GitHub</a></li>
-  <li><a href="#gitignore" id="toc-gitignore" class="nav-link" data-scroll-target="#gitignore">.gitignore</a></li>
-  <li><a href="#fetch-vs-pull" id="toc-fetch-vs-pull" class="nav-link" data-scroll-target="#fetch-vs-pull">Fetch vs Pull</a></li>
-  <li><a href="#clean-up-optional" id="toc-clean-up-optional" class="nav-link" data-scroll-target="#clean-up-optional">Clean up (optional)</a></li>
+  <li><a href="#download-and-extract" id="toc-download-and-extract" class="nav-link" data-scroll-target="#download-and-extract">Download and extract</a></li>
+  <li><a href="#read-the-core-tables" id="toc-read-the-core-tables" class="nav-link" data-scroll-target="#read-the-core-tables">Read the core tables</a></li>
+  <li><a href="#how-big-is-this-dataset" id="toc-how-big-is-this-dataset" class="nav-link" data-scroll-target="#how-big-is-this-dataset">How big is this dataset?</a></li>
+  <li><a href="#the-person-table" id="toc-the-person-table" class="nav-link" data-scroll-target="#the-person-table">The person table</a></li>
+  <li><a href="#the-concept-table-the-rosetta-stone" id="toc-the-concept-table-the-rosetta-stone" class="nav-link" data-scroll-target="#the-concept-table-the-rosetta-stone">The concept table: the Rosetta Stone</a></li>
+  <li><a href="#observation-period" id="toc-observation-period" class="nav-link" data-scroll-target="#observation-period">Observation period</a></li>
+  <li><a href="#condition-occurrence" id="toc-condition-occurrence" class="nav-link" data-scroll-target="#condition-occurrence">Condition occurrence</a></li>
+  <li><a href="#drug-exposure" id="toc-drug-exposure" class="nav-link" data-scroll-target="#drug-exposure">Drug exposure</a></li>
+  <li><a href="#how-the-tables-connect" id="toc-how-the-tables-connect" class="nav-link" data-scroll-target="#how-the-tables-connect">How the tables connect</a></li>
+  <li><a href="#the-cohort-table" id="toc-the-cohort-table" class="nav-link" data-scroll-target="#the-cohort-table">The cohort table</a></li>
+  <li><a href="#the-concept-ancestor-table" id="toc-the-concept-ancestor-table" class="nav-link" data-scroll-target="#the-concept-ancestor-table">The concept ancestor table</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
   </ul></li>
-  <li><a href="#omop-cdm-schema-tour" id="toc-omop-cdm-schema-tour" class="nav-link" data-scroll-target="#omop-cdm-schema-tour">2. OMOP CDM Schema Tour</a>
-  <ul class="collapse">
-  <li><a href="#browse-the-cdm-repository" id="toc-browse-the-cdm-repository" class="nav-link" data-scroll-target="#browse-the-cdm-repository">Browse the CDM Repository</a></li>
-  <li><a href="#cdm-table-relationships" id="toc-cdm-table-relationships" class="nav-link" data-scroll-target="#cdm-table-relationships">CDM Table Relationships</a></li>
-  <li><a href="#key-insight" id="toc-key-insight" class="nav-link" data-scroll-target="#key-insight">Key insight</a></li>
-  </ul></li>
-  <li><a href="#eunomia-setup-sql-basics" id="toc-eunomia-setup-sql-basics" class="nav-link" data-scroll-target="#eunomia-setup-sql-basics">3. Eunomia Setup &amp; SQL Basics</a>
-  <ul class="collapse">
-  <li><a href="#install-packages-if-needed" id="toc-install-packages-if-needed" class="nav-link" data-scroll-target="#install-packages-if-needed">Install packages (if needed)</a></li>
-  <li><a href="#connect-to-eunomia" id="toc-connect-to-eunomia" class="nav-link" data-scroll-target="#connect-to-eunomia">Connect to Eunomia</a></li>
-  <li><a href="#see-whats-in-the-database" id="toc-see-whats-in-the-database" class="nav-link" data-scroll-target="#see-whats-in-the-database">See what’s in the database</a></li>
-  <li><a href="#query-the-person-table" id="toc-query-the-person-table" class="nav-link" data-scroll-target="#query-the-person-table">Query the person table</a></li>
-  <li><a href="#join-with-concept-to-decode" id="toc-join-with-concept-to-decode" class="nav-link" data-scroll-target="#join-with-concept-to-decode">Join with concept to decode</a></li>
-  <li><a href="#count-patients-by-gender" id="toc-count-patients-by-gender" class="nav-link" data-scroll-target="#count-patients-by-gender">Count patients by gender</a></li>
-  <li><a href="#find-the-most-common-conditions" id="toc-find-the-most-common-conditions" class="nav-link" data-scroll-target="#find-the-most-common-conditions">Find the most common conditions</a></li>
-  <li><a href="#find-the-most-common-drugs" id="toc-find-the-most-common-drugs" class="nav-link" data-scroll-target="#find-the-most-common-drugs">Find the most common drugs</a></li>
-  </ul></li>
-  <li><a href="#sqlrender-across-databases" id="toc-sqlrender-across-databases" class="nav-link" data-scroll-target="#sqlrender-across-databases">4. SqlRender Across Databases</a>
-  <ul class="collapse">
-  <li><a href="#load-sqlrender" id="toc-load-sqlrender" class="nav-link" data-scroll-target="#load-sqlrender">Load SqlRender</a></li>
-  <li><a href="#the-problem-sql-dialects-differ" id="toc-the-problem-sql-dialects-differ" class="nav-link" data-scroll-target="#the-problem-sql-dialects-differ">The problem: SQL dialects differ</a></li>
-  <li><a href="#sqlrender-translates-for-you" id="toc-sqlrender-translates-for-you" class="nav-link" data-scroll-target="#sqlrender-translates-for-you">SqlRender translates for you</a></li>
-  <li><a href="#parameterization-with-variables" id="toc-parameterization-with-variables" class="nav-link" data-scroll-target="#parameterization-with-variables">Parameterization with <span class="citation" data-cites="variables">@variables</span></a></li>
-  <li><a href="#combine-render-translate" id="toc-combine-render-translate" class="nav-link" data-scroll-target="#combine-render-translate">Combine render + translate</a></li>
-  <li><a href="#why-this-matters" id="toc-why-this-matters" class="nav-link" data-scroll-target="#why-this-matters">Why this matters</a></li>
-  </ul></li>
-  <li><a href="#patient-odyssey" id="toc-patient-odyssey" class="nav-link" data-scroll-target="#patient-odyssey">5. Patient Odyssey</a>
-  <ul class="collapse">
-  <li><a href="#find-a-patient-with-interesting-data" id="toc-find-a-patient-with-interesting-data" class="nav-link" data-scroll-target="#find-a-patient-with-interesting-data">Find a patient with interesting data</a></li>
-  <li><a href="#get-patient-demographics" id="toc-get-patient-demographics" class="nav-link" data-scroll-target="#get-patient-demographics">Get patient demographics</a></li>
-  <li><a href="#get-observation-period" id="toc-get-observation-period" class="nav-link" data-scroll-target="#get-observation-period">Get observation period</a></li>
-  <li><a href="#get-their-conditions" id="toc-get-their-conditions" class="nav-link" data-scroll-target="#get-their-conditions">Get their conditions</a></li>
-  <li><a href="#get-their-drug-exposures" id="toc-get-their-drug-exposures" class="nav-link" data-scroll-target="#get-their-drug-exposures">Get their drug exposures</a></li>
-  <li><a href="#visualize-the-patient-timeline" id="toc-visualize-the-patient-timeline" class="nav-link" data-scroll-target="#visualize-the-patient-timeline">Visualize the patient timeline</a></li>
-  <li><a href="#how-the-data-connects" id="toc-how-the-data-connects" class="nav-link" data-scroll-target="#how-the-data-connects">How the data connects</a></li>
-  <li><a href="#questions-to-explore" id="toc-questions-to-explore" class="nav-link" data-scroll-target="#questions-to-explore">Questions to explore</a></li>
-  </ul></li>
-  <li><a href="#atlas-cohort-definitions" id="toc-atlas-cohort-definitions" class="nav-link" data-scroll-target="#atlas-cohort-definitions">6. ATLAS Cohort Definitions</a>
-  <ul class="collapse">
-  <li><a href="#access-the-atlas-demo" id="toc-access-the-atlas-demo" class="nav-link" data-scroll-target="#access-the-atlas-demo">Access the ATLAS demo</a></li>
-  <li><a href="#explore-existing-cohort-definitions" id="toc-explore-existing-cohort-definitions" class="nav-link" data-scroll-target="#explore-existing-cohort-definitions">Explore existing cohort definitions</a></li>
-  <li><a href="#anatomy-of-a-cohort-definition" id="toc-anatomy-of-a-cohort-definition" class="nav-link" data-scroll-target="#anatomy-of-a-cohort-definition">Anatomy of a cohort definition</a></li>
-  <li><a href="#view-the-generated-sql" id="toc-view-the-generated-sql" class="nav-link" data-scroll-target="#view-the-generated-sql">View the generated SQL</a></li>
-  <li><a href="#example-type-2-diabetes-cohort" id="toc-example-type-2-diabetes-cohort" class="nav-link" data-scroll-target="#example-type-2-diabetes-cohort">Example: Type 2 Diabetes cohort</a></li>
-  <li><a href="#the-generated-sql" id="toc-the-generated-sql" class="nav-link" data-scroll-target="#the-generated-sql">The generated SQL</a></li>
-  <li><a href="#why-this-matters-1" id="toc-why-this-matters-1" class="nav-link" data-scroll-target="#why-this-matters-1">Why this matters</a></li>
-  <li><a href="#exercise-build-your-own" id="toc-exercise-build-your-own" class="nav-link" data-scroll-target="#exercise-build-your-own">Exercise: Build your own</a></li>
-  </ul></li>
-  <li><a href="#clean-up" id="toc-clean-up" class="nav-link" data-scroll-target="#clean-up">Clean up</a></li>
-  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a>
-  <ul class="collapse">
-  <li><a href="#key-takeaways" id="toc-key-takeaways" class="nav-link" data-scroll-target="#key-takeaways">Key takeaways</a></li>
   <li><a href="#resources" id="toc-resources" class="nav-link" data-scroll-target="#resources">Resources</a></li>
-  <li><a href="#next-session" id="toc-next-session" class="nav-link" data-scroll-target="#next-session">Next session</a></li>
-  </ul></li>
   </ul>
 </nav>
 </div>
@@ -2287,8 +2231,8 @@ vertical-align: -.125em;
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Module 03: Git, SQL, and the OMOP CDM</h1>
-<p class="subtitle lead">Hands-on Practice with Version Control and Healthcare Data</p>
+<h1 class="title">Module 04: Cohort Definitions and Diagnostics</h1>
+<p class="subtitle lead">Exploring OHDSI Cohort Definitions and Building Intuition for Cohort Diagnostics</p>
 </div>
 
 
@@ -2308,698 +2252,231 @@ vertical-align: -.125em;
 <section id="agenda" class="level2">
 <h2 class="anchored" data-anchor-id="agenda">Agenda</h2>
 <ol type="1">
-<li><strong>Git Practice</strong> (Hands-on)</li>
-<li><strong>OMOP CDM Schema Tour</strong> (Exploration)</li>
-<li><strong>Eunomia Setup &amp; SQL Basics</strong> (Hands-on)</li>
-<li><strong>SqlRender Across Databases</strong> (Demo)</li>
-<li><strong>Patient Odyssey</strong> (Guided Exploration)</li>
-<li><strong>ATLAS Cohort Definitions</strong> (Exploration)</li>
+<li><strong>Exploring the OMOP CDM</strong> — Download Eunomia, read the raw tables, see how it all connects</li>
+<li><strong>Cohort Definitions</strong> — Pull definitions from CohortDiagnostics, examine JSON and SQL</li>
+<li><strong>Naive Cohort Diagnostics with dplyr</strong> — Build diagnostic visualizations by hand</li>
+<li><strong>Transition to CohortDiagnostics</strong> — Why the package exists</li>
 </ol>
 <hr>
 </section>
-<section id="git-practice" class="level2">
-<h2 class="anchored" data-anchor-id="git-practice">1. Git Practice</h2>
-<p>We’ll create a Git repository using RStudio, practice the workflow with both the terminal and RStudio’s built-in tools.</p>
-<section id="create-a-new-rstudio-project" class="level3">
-<h3 class="anchored" data-anchor-id="create-a-new-rstudio-project">Create a new RStudio Project</h3>
-<ol type="1">
-<li>In RStudio: <strong>File -&gt; New Project…</strong></li>
-<li>Select <strong>New Directory</strong></li>
-<li>Select <strong>New Project</strong></li>
-<li>Name it <code>git-practice</code></li>
-<li>Choose a location (e.g., your Desktop)</li>
-<li>Click <strong>Create Project</strong></li>
-</ol>
-<p>RStudio opens your new project. Notice there’s no Git pane yet.</p>
-<p><em>(Note: RStudio has a “Create a git repository” checkbox you can use to skip the next step, but we’ll do it manually to learn the command.)</em></p>
+<section id="exploring-the-omop-cdm" class="level2">
+<h2 class="anchored" data-anchor-id="exploring-the-omop-cdm">1. Exploring the OMOP CDM</h2>
+<p>Eunomia is typically accessed through the <code>Eunomia</code> R package, which wraps a SQLite database. But under the hood, it’s just a set of CSV files in the OMOP CDM format. Let’s download the raw data and look at it directly.</p>
+<section id="download-and-extract" class="level3">
+<h3 class="anchored" data-anchor-id="download-and-extract">Download and extract</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Download the Eunomia GiBleed dataset</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>eunomia_url <span class="ot">&lt;-</span> <span class="st">&quot;https://raw.githubusercontent.com/OHDSI/EunomiaDatasets/main/datasets/GiBleed/GiBleed_5.3.zip&quot;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>zip_path <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;GiBleed_5.3.zip&quot;</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">download.file</span>(eunomia_url, zip_path, <span class="at">mode =</span> <span class="st">&quot;wb&quot;</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Unzip</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>data_dir <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">tempdir</span>(), <span class="st">&quot;GiBleed_5.3&quot;</span>)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">unzip</span>(zip_path, <span class="at">exdir =</span> <span class="fu">tempdir</span>())</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="co"># What files do we have?</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">list.files</span>(data_dir) <span class="sc">|&gt;</span> <span class="fu">sort</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Every file is one OMOP CDM table, stored as a CSV. This is the same data that Eunomia loads into SQLite — we’re just looking at it raw.</p>
 </section>
-<section id="initialize-git-via-terminal" class="level3">
-<h3 class="anchored" data-anchor-id="initialize-git-via-terminal">Initialize Git via terminal</h3>
-<p>Open the Terminal in RStudio (Tools -&gt; Terminal -&gt; New Terminal).</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> init</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>You should see: <code>Initialized empty Git repository in .../git-practice/.git/</code></p>
-<p>Now look at RStudio. The <strong>Git pane</strong> should appear (usually top-right). If not, restart RStudio or go to Tools -&gt; Project Options -&gt; Git/SVN and confirm Git is detected.</p>
+<section id="read-the-core-tables" class="level3">
+<h3 class="anchored" data-anchor-id="read-the-core-tables">Read the core tables</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>person <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(data_dir, <span class="st">&quot;PERSON.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>observation_period <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(data_dir, <span class="st">&quot;OBSERVATION_PERIOD.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>condition_occurrence <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(data_dir, <span class="st">&quot;CONDITION_OCCURRENCE.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>drug_exposure <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(data_dir, <span class="st">&quot;DRUG_EXPOSURE.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>visit_occurrence <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(data_dir, <span class="st">&quot;VISIT_OCCURRENCE.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>measurement <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(data_dir, <span class="st">&quot;MEASUREMENT.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>procedure_occurrence <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(data_dir, <span class="st">&quot;PROCEDURE_OCCURRENCE.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>concept <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(data_dir, <span class="st">&quot;CONCEPT.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>concept_ancestor <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(data_dir, <span class="st">&quot;CONCEPT_ANCESTOR.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>cohort <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="fu">file.path</span>(data_dir, <span class="st">&quot;COHORT.csv&quot;</span>), <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
 </section>
-<section id="copy-this-module-file" class="level3">
-<h3 class="anchored" data-anchor-id="copy-this-module-file">Copy this module file</h3>
-<p>Copy this module file (<code>ohdsi-basics.qmd</code>) into your new <code>git-practice</code> folder. You can:</p>
+<section id="how-big-is-this-dataset" class="level3">
+<h3 class="anchored" data-anchor-id="how-big-is-this-dataset">How big is this dataset?</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">table =</span> <span class="fu">c</span>(<span class="st">&quot;person&quot;</span>, <span class="st">&quot;observation_period&quot;</span>, <span class="st">&quot;condition_occurrence&quot;</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;drug_exposure&quot;</span>, <span class="st">&quot;visit_occurrence&quot;</span>, <span class="st">&quot;measurement&quot;</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>            <span class="st">&quot;procedure_occurrence&quot;</span>, <span class="st">&quot;concept&quot;</span>, <span class="st">&quot;concept_ancestor&quot;</span>, <span class="st">&quot;cohort&quot;</span>),</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">rows =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(person), <span class="fu">nrow</span>(observation_period), <span class="fu">nrow</span>(condition_occurrence),</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>           <span class="fu">nrow</span>(drug_exposure), <span class="fu">nrow</span>(visit_occurrence), <span class="fu">nrow</span>(measurement),</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>           <span class="fu">nrow</span>(procedure_occurrence), <span class="fu">nrow</span>(concept), <span class="fu">nrow</span>(concept_ancestor),</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>           <span class="fu">nrow</span>(cohort))</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="the-person-table" class="level3">
+<h3 class="anchored" data-anchor-id="the-person-table">The person table</h3>
+<p>Demographics. Every patient has exactly one row here.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(person)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>person <span class="sc">|&gt;</span> <span class="fu">head</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Notice the <code>*_concept_id</code> columns: <code>GENDER_CONCEPT_ID</code>, <code>RACE_CONCEPT_ID</code>, <code>ETHNICITY_CONCEPT_ID</code>. These are codes, not human-readable names. To decode them, we need the <code>concept</code> table.</p>
+</section>
+<section id="the-concept-table-the-rosetta-stone" class="level3">
+<h3 class="anchored" data-anchor-id="the-concept-table-the-rosetta-stone">The concept table: the Rosetta Stone</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(concept)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>concept <span class="sc">|&gt;</span> <span class="fu">head</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This table maps <code>CONCEPT_ID</code> values to human-readable names, vocabularies, and domains.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># What gender concepts are used?</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>person <span class="sc">|&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(GENDER_CONCEPT_ID) <span class="sc">|&gt;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(concept, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;GENDER_CONCEPT_ID&quot;</span> <span class="ot">=</span> <span class="st">&quot;CONCEPT_ID&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(GENDER_CONCEPT_ID, CONCEPT_NAME, VOCABULARY_ID)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This dataset doesn’t label race concepts, but we could look them up at Athena: [https://athena.ohdsi.org/search-terms/terms/8516].ss</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># What race concepts?</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>person <span class="sc">|&gt;</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(RACE_CONCEPT_ID) <span class="sc">|&gt;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(concept, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;RACE_CONCEPT_ID&quot;</span> <span class="ot">=</span> <span class="st">&quot;CONCEPT_ID&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(RACE_CONCEPT_ID, CONCEPT_NAME, VOCABULARY_ID)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This is the pattern everywhere in OMOP: a <code>*_concept_id</code> column holds a code, and you join to <code>concept</code> to get the name. The vocabulary system standardizes across ICD, SNOMED, RxNorm, LOINC, and more.</p>
+</section>
+<section id="observation-period" class="level3">
+<h3 class="anchored" data-anchor-id="observation-period">Observation period</h3>
+<p>When do we have data on each person? This table defines the window of time during which a person’s records are considered complete.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>observation_period <span class="sc">|&gt;</span> <span class="fu">head</span>()</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># How many observation periods per person?</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>observation_period <span class="sc">|&gt;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(PERSON_ID, <span class="at">name =</span> <span class="st">&quot;n_periods&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(n_periods, <span class="at">name =</span> <span class="st">&quot;n_people&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="condition-occurrence" class="level3">
+<h3 class="anchored" data-anchor-id="condition-occurrence">Condition occurrence</h3>
+<p>Diagnoses. Each row is one recorded condition for one person.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(condition_occurrence)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>condition_occurrence <span class="sc">|&gt;</span> <span class="fu">head</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The <code>CONDITION_CONCEPT_ID</code> is the standardized code. Let’s see what the most common conditions are:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>z <span class="ot">&lt;-</span> condition_occurrence <span class="sc">|&gt;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(CONDITION_CONCEPT_ID, <span class="at">sort =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">50</span>) <span class="sc">|&gt;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(concept, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;CONDITION_CONCEPT_ID&quot;</span> <span class="ot">=</span> <span class="st">&quot;CONCEPT_ID&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(CONDITION_CONCEPT_ID, CONCEPT_NAME, n) <span class="sc">|&gt;</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="dv">25</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This is the GiBleed dataset, so gastrointestinal hemorrhage (concept 192671) should be prominent.</p>
+</section>
+<section id="drug-exposure" class="level3">
+<h3 class="anchored" data-anchor-id="drug-exposure">Drug exposure</h3>
+<p>Medications. Each row is one drug exposure for one person.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(drug_exposure)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>drug_exposure <span class="sc">|&gt;</span> <span class="fu">head</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Most common drugs</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>drug_exposure <span class="sc">|&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(DRUG_CONCEPT_ID, <span class="at">sort =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">15</span>) <span class="sc">|&gt;</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(concept, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;DRUG_CONCEPT_ID&quot;</span> <span class="ot">=</span> <span class="st">&quot;CONCEPT_ID&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(DRUG_CONCEPT_ID, CONCEPT_NAME, VOCABULARY_ID, n)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>You should see NSAIDs like celecoxib and diclofenac. The GiBleed dataset is designed around the GI bleeds and NSAIDs.</p>
+</section>
+<section id="how-the-tables-connect" class="level3">
+<h3 class="anchored" data-anchor-id="how-the-tables-connect">How the tables connect</h3>
+<p>Everything connects through two keys:</p>
 <ul>
-<li>Use your file browser to copy/paste, or</li>
-<li>In the RStudio Files pane, click <strong>More -&gt; Set As Working Directory</strong>, then copy the file</li>
+<li><strong><code>PERSON_ID</code></strong> — links clinical events to a patient</li>
+<li><strong><code>CONCEPT_ID</code></strong> — standardizes meaning across vocabularies</li>
 </ul>
+<p>Let’s follow one patient through the data:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Pick a patient with interesting data</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>patient_summary <span class="ot">&lt;-</span> condition_occurrence <span class="sc">|&gt;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(PERSON_ID) <span class="sc">|&gt;</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n_conditions =</span> <span class="fu">n_distinct</span>(CONDITION_CONCEPT_ID)) <span class="sc">|&gt;</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(n_conditions)) <span class="sc">|&gt;</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">1</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>pid <span class="ot">&lt;-</span> patient_summary<span class="sc">$</span>PERSON_ID[<span class="dv">1</span>]</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">&quot;Patient&quot;</span>, pid, <span class="st">&quot;has&quot;</span>, patient_summary<span class="sc">$</span>n_conditions[<span class="dv">1</span>], <span class="st">&quot;distinct conditions&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Demographics</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>person <span class="sc">|&gt;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(PERSON_ID <span class="sc">==</span> pid) <span class="sc">|&gt;</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(concept <span class="sc">|&gt;</span> <span class="fu">select</span>(CONCEPT_ID, <span class="at">gender =</span> CONCEPT_NAME),</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;GENDER_CONCEPT_ID&quot;</span> <span class="ot">=</span> <span class="st">&quot;CONCEPT_ID&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(concept <span class="sc">|&gt;</span> <span class="fu">select</span>(CONCEPT_ID, <span class="at">race =</span> CONCEPT_NAME),</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;RACE_CONCEPT_ID&quot;</span> <span class="ot">=</span> <span class="st">&quot;CONCEPT_ID&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(PERSON_ID, YEAR_OF_BIRTH, gender, race)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Their conditions</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>condition_occurrence <span class="sc">|&gt;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(PERSON_ID <span class="sc">==</span> pid) <span class="sc">|&gt;</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(concept, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;CONDITION_CONCEPT_ID&quot;</span> <span class="ot">=</span> <span class="st">&quot;CONCEPT_ID&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(CONDITION_START_DATE, CONCEPT_NAME) <span class="sc">|&gt;</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(CONDITION_START_DATE)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Their drugs</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>drug_exposure <span class="sc">|&gt;</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(PERSON_ID <span class="sc">==</span> pid) <span class="sc">|&gt;</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(concept, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;DRUG_CONCEPT_ID&quot;</span> <span class="ot">=</span> <span class="st">&quot;CONCEPT_ID&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(DRUG_EXPOSURE_START_DATE, CONCEPT_NAME, DAYS_SUPPLY) <span class="sc">|&gt;</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(DRUG_EXPOSURE_START_DATE)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
 </section>
-<section id="explore-rstudios-git-pane" class="level3">
-<h3 class="anchored" data-anchor-id="explore-rstudios-git-pane">Explore RStudio’s Git pane</h3>
-<p>Look at the <strong>Git pane</strong> (usually top-right, next to Environment/History).</p>
-<p>You should see <code>ohdsi-basics.qmd</code> listed with a yellow <strong>?</strong> icon. This means it’s untracked.</p>
+<section id="the-cohort-table" class="level3">
+<h3 class="anchored" data-anchor-id="the-cohort-table">The cohort table</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(cohort)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(cohort)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Four columns: <code>COHORT_DEFINITION_ID</code>, <code>SUBJECT_ID</code>, <code>COHORT_START_DATE</code>, <code>COHORT_END_DATE</code>. It’s empty because cohorts don’t exist in the raw data. They’re <em>created</em> by running a cohort definition against the CDM. That’s the topic of the next section.</p>
 </section>
-<section id="stage-using-rstudio" class="level3">
-<h3 class="anchored" data-anchor-id="stage-using-rstudio">Stage using RStudio</h3>
-<p>In the Git pane:</p>
-<ol type="1">
-<li>Check the box next to <code>ohdsi-basics.qmd</code></li>
-<li>The icon changes to a green <strong>A</strong> (Added/staged)</li>
-</ol>
-<p>That’s it. You just staged a file without touching the terminal.</p>
+<section id="the-concept-ancestor-table" class="level3">
+<h3 class="anchored" data-anchor-id="the-concept-ancestor-table">The concept ancestor table</h3>
+<p>This table encodes vocabulary hierarchies. It lets you find, for example, all specific drugs that fall under the broader concept of “NSAIDs.”</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>concept_ancestor <span class="sc">|&gt;</span> <span class="fu">head</span>()</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Find celecoxib (1118084) and its ancestors</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>concept_ancestor <span class="sc">|&gt;</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DESCENDANT_CONCEPT_ID <span class="sc">==</span> <span class="dv">1118084</span>) <span class="sc">|&gt;</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(concept <span class="sc">|&gt;</span> <span class="fu">select</span>(CONCEPT_ID, <span class="at">ancestor_name =</span> CONCEPT_NAME),</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="fu">c</span>(<span class="st">&quot;ANCESTOR_CONCEPT_ID&quot;</span> <span class="ot">=</span> <span class="st">&quot;CONCEPT_ID&quot;</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ancestor_name, MIN_LEVELS_OF_SEPARATION, MAX_LEVELS_OF_SEPARATION) <span class="sc">|&gt;</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(MIN_LEVELS_OF_SEPARATION)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>This hierarchical structure is how OHDSI cohort definitions can specify “any NSAID” rather than listing every specific formulation.</p>
 </section>
-<section id="commit-using-rstudio" class="level3">
-<h3 class="anchored" data-anchor-id="commit-using-rstudio">Commit using RStudio</h3>
-<ol type="1">
-<li>Click <strong>Commit</strong> in the Git pane</li>
-<li>A new window opens showing your staged changes</li>
-<li>Write a commit message: “Add module file”</li>
-<li>Click <strong>Commit</strong></li>
-</ol>
-<p>You’ve made your first commit.</p>
+<section id="summary" class="level3">
+<h3 class="anchored" data-anchor-id="summary">Summary</h3>
+<p>The OMOP CDM is a set of connected tables. We just explored the same data that Eunomia and DatabaseConnector abstract behind a SQL interface , but it’s all just tables linked by <code>person_id</code> and <code>concept_id</code>. The cohort table is empty because cohorts are the <em>output</em> of running a cohort definition. That’s what we’ll look at next.</p>
 </section>
-<section id="now-lets-use-the-terminal" class="level3">
-<h3 class="anchored" data-anchor-id="now-lets-use-the-terminal">Now let’s use the Terminal</h3>
-<p>RStudio’s GUI is convenient, but knowing the terminal commands matters. Open the Terminal (Tools -&gt; Terminal -&gt; New Terminal).</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check status</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> status</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Git shows a clean working directory. Your commit worked.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># View history</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> log <span class="at">--oneline</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>You’ll see your commit with its message.</p>
 </section>
-<section id="make-changes-and-commit-via-terminal" class="level3">
-<h3 class="anchored" data-anchor-id="make-changes-and-commit-via-terminal">Make changes and commit via terminal</h3>
-<p>Edit the module file: add a comment at the top, or change something small. Save it.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># See what changed</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> status</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> diff</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><code>git diff</code> shows the exact lines that changed.</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stage the file</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> add ohdsi-basics.qmd</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Commit with a message</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> commit <span class="at">-m</span> <span class="st">&quot;Make edits to module&quot;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="compare-rstudio-vs-terminal" class="level3">
-<h3 class="anchored" data-anchor-id="compare-rstudio-vs-terminal">Compare: RStudio vs Terminal</h3>
+<section id="resources" class="level2">
+<h2 class="anchored" data-anchor-id="resources">Resources</h2>
 <ul>
-<li><strong>See changes:</strong> Git pane shows icons, or <code>git status</code></li>
-<li><strong>Stage:</strong> Check the box, or <code>git add &lt;file&gt;</code></li>
-<li><strong>Commit:</strong> Click Commit button, or <code>git commit -m &quot;msg&quot;</code></li>
-<li><strong>View diff:</strong> Click file in Commit window, or <code>git diff</code></li>
-<li><strong>History:</strong> Click History, or <code>git log</code></li>
-</ul>
-<p>Both work. Use whichever feels natural.</p>
-</section>
-<section id="key-terminal-commands" class="level3">
-<h3 class="anchored" data-anchor-id="key-terminal-commands">Key terminal commands</h3>
-<ul>
-<li><code>git status</code>: See current state</li>
-<li><code>git add &lt;file&gt;</code>: Stage changes</li>
-<li><code>git commit -m &quot;msg&quot;</code>: Save snapshot</li>
-<li><code>git diff</code>: See unstaged changes</li>
-<li><code>git log</code>: View history</li>
-</ul>
-</section>
-<section id="connecting-to-github" class="level3">
-<h3 class="anchored" data-anchor-id="connecting-to-github">Connecting to GitHub</h3>
-<p>When you’re ready to backup to GitHub:</p>
-<ol type="1">
-<li>Go to GitHub and create a new repository (don’t initialize with README)</li>
-<li>Copy the repository URL</li>
-</ol>
-<p>In the terminal:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Connect your local repo to GitHub</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> remote add origin https://github.com/YOUR-USERNAME/git-practice.git</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Push your commits</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> push <span class="at">-u</span> origin main</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>Or in RStudio: <strong>Tools -&gt; Project Options -&gt; Git/SVN</strong> and add the remote URL.</p>
-<p>After the first push, you can use:</p>
-<ul>
-<li>Terminal: <code>git push</code> and <code>git pull</code></li>
-<li>RStudio: Push/Pull buttons in the Git pane</li>
-</ul>
-</section>
-<section id="gitignore" class="level3">
-<h3 class="anchored" data-anchor-id="gitignore">.gitignore</h3>
-<p>Not everything belongs in Git. A <code>.gitignore</code> file tells Git which files to skip.</p>
-<p>Common things to ignore:</p>
-<ul>
-<li>Large data files (<code>*.csv</code>, <code>*.rds</code>, <code>data/</code>)</li>
-<li>Credentials and secrets (<code>.env</code>, <code>.Renviron</code>, <code>*.pem</code>)</li>
-<li>Generated outputs (<code>*_files/</code>, <code>*.html</code>, <code>_site/</code>)</li>
-<li>System junk (<code>.DS_Store</code>, <code>Thumbs.db</code>)</li>
-</ul>
-<p>Create a <code>.gitignore</code> file in your project root:</p>
-<pre><code># Data files
-data/
-*.csv
-*.rds
-
-# Secrets
-.env
-.Renviron
-
-# Generated output
-*_files/
-*.html
-
-# System
-.DS_Store</code></pre>
-<p>RStudio projects create a default <code>.gitignore</code> for you. Open it and review what’s already there.</p>
-<p><strong>Why this matters:</strong> Without <code>.gitignore</code>, you might accidentally commit a 500MB data file or push database credentials to public GitHub.</p>
-<p><strong>Critical for biomedical work:</strong> Patient data and PHI should never be committed to a Git repository. Once something is committed, it lives in the history forever, even if you delete the file later. Even “private” repositories can be misconfigured or leaked. Always ignore your <code>data/</code> folder and query data from databases rather than storing local copies.</p>
-</section>
-<section id="fetch-vs-pull" class="level3">
-<h3 class="anchored" data-anchor-id="fetch-vs-pull">Fetch vs Pull</h3>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> fetch   <span class="co"># Download changes from GitHub (don&#39;t merge yet)</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">git</span> pull    <span class="co"># Download AND merge changes</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p><code>fetch</code> lets you see what’s new before merging. <code>pull</code> does both at once.</p>
-</section>
-<section id="clean-up-optional" class="level3">
-<h3 class="anchored" data-anchor-id="clean-up-optional">Clean up (optional)</h3>
-<p>When you’re done practicing, you can delete the <code>git-practice</code> folder from your Desktop.</p>
-<hr>
-</section>
-</section>
-<section id="omop-cdm-schema-tour" class="level2">
-<h2 class="anchored" data-anchor-id="omop-cdm-schema-tour">2. OMOP CDM Schema Tour</h2>
-<p>The OMOP Common Data Model defines the structure for healthcare data. Let’s explore the official specification.</p>
-<section id="browse-the-cdm-repository" class="level3">
-<h3 class="anchored" data-anchor-id="browse-the-cdm-repository">Browse the CDM Repository</h3>
-<p>Open in your browser: <a href="https://github.com/OHDSI/CommonDataModel" class="uri">https://github.com/OHDSI/CommonDataModel</a></p>
-<p><strong>Exploration tasks:</strong></p>
-<ol type="1">
-<li>Navigate to <code>inst/ddl/5.4/</code> - these are the table definitions</li>
-<li>Open <code>postgresql/</code> and look at <code>OMOPCDM_postgresql_5.4_ddl.sql</code></li>
-<li>Find the <code>CREATE TABLE person</code> statement</li>
-<li>What columns does the <code>person</code> table have?</li>
-</ol>
-</section>
-<section id="cdm-table-relationships" class="level3">
-<h3 class="anchored" data-anchor-id="cdm-table-relationships">CDM Table Relationships</h3>
-<p>The CDM tables connect through <code>person_id</code> and <code>concept_id</code>.</p>
-<p><strong>Core clinical tables</strong> (all link to <code>person</code> via <code>person_id</code>):</p>
-<ul>
-<li><code>person</code>: Demographics (birth year, gender, race)</li>
-<li><code>observation_period</code>: When we have data on each person</li>
-<li><code>visit_occurrence</code>: Healthcare encounters</li>
-<li><code>condition_occurrence</code>: Diagnoses</li>
-<li><code>drug_exposure</code>: Medications</li>
-<li><code>procedure_occurrence</code>: Procedures performed</li>
-<li><code>measurement</code>: Labs and vitals</li>
-</ul>
-<p><strong>The vocabulary table:</strong></p>
-<ul>
-<li><code>concept</code>: Standardized meanings for all coded values</li>
-</ul>
-<p>Clinical events link to visits via <code>visit_occurrence_id</code>, and everything uses <code>concept_id</code> to reference standardized terminology.</p>
-</section>
-<section id="key-insight" class="level3">
-<h3 class="anchored" data-anchor-id="key-insight">Key insight</h3>
-<p>Everything connects through:</p>
-<ul>
-<li><code>person_id</code> – links clinical events to a patient</li>
-<li><code>concept_id</code> – standardizes meaning across vocabularies</li>
-</ul>
-<hr>
-</section>
-</section>
-<section id="eunomia-setup-sql-basics" class="level2">
-<h2 class="anchored" data-anchor-id="eunomia-setup-sql-basics">3. Eunomia Setup &amp; SQL Basics</h2>
-<p>Eunomia is a synthetic OMOP CDM database we can query locally.</p>
-<section id="install-packages-if-needed" class="level3">
-<h3 class="anchored" data-anchor-id="install-packages-if-needed">Install packages (if needed)</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;DatabaseConnector&quot;</span>)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;Eunomia&quot;</span>)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;SqlRender&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="connect-to-eunomia" class="level3">
-<h3 class="anchored" data-anchor-id="connect-to-eunomia">Connect to Eunomia</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DatabaseConnector)</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Eunomia)</span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Get connection details (downloads data on first run)</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>connectionDetails <span class="ot">&lt;-</span> <span class="fu">getEunomiaConnectionDetails</span>()</span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Connect</span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>connection <span class="ot">&lt;-</span> <span class="fu">connect</span>(connectionDetails)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="see-whats-in-the-database" class="level3">
-<h3 class="anchored" data-anchor-id="see-whats-in-the-database">See what’s in the database</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># List all tables</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">getTableNames</span>(connection, <span class="at">databaseSchema =</span> <span class="st">&quot;main&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="query-the-person-table" class="level3">
-<h3 class="anchored" data-anchor-id="query-the-person-table">Query the person table</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">querySql</span>(connection, <span class="st">&quot;</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT *</span></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.person</span></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="st">  LIMIT 10</span></span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Notice the <code>concept_id</code> columns - these are codes, not human-readable names.</p>
-</section>
-<section id="join-with-concept-to-decode" class="level3">
-<h3 class="anchored" data-anchor-id="join-with-concept-to-decode">Join with concept to decode</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">querySql</span>(connection, <span class="st">&quot;</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="st">    p.person_id,</span></span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="st">    p.year_of_birth,</span></span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="st">    g.concept_name AS gender,</span></span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="st">    r.concept_name AS race</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.person p</span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN main.concept g ON p.gender_concept_id = g.concept_id</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN main.concept r ON p.race_concept_id = r.concept_id</span></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a><span class="st">  LIMIT 20</span></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="count-patients-by-gender" class="level3">
-<h3 class="anchored" data-anchor-id="count-patients-by-gender">Count patients by gender</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">querySql</span>(connection, <span class="st">&quot;</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT</span></span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="st">    g.concept_name AS gender,</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="st">    COUNT(*) AS n_patients</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.person p</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN main.concept g ON p.gender_concept_id = g.concept_id</span></span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="st">  GROUP BY g.concept_name</span></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="find-the-most-common-conditions" class="level3">
-<h3 class="anchored" data-anchor-id="find-the-most-common-conditions">Find the most common conditions</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">querySql</span>(connection, <span class="st">&quot;</span></span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT</span></span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="st">    c.concept_name AS condition,</span></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="st">    COUNT(*) AS n_occurrences,</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a><span class="st">    COUNT(DISTINCT co.person_id) AS n_patients</span></span>
-<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.condition_occurrence co</span></span>
-<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a><span class="st">  JOIN main.concept c ON co.condition_concept_id = c.concept_id</span></span>
-<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="st">  GROUP BY c.concept_name</span></span>
-<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="st">  ORDER BY n_patients DESC</span></span>
-<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a><span class="st">  LIMIT 15</span></span>
-<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="find-the-most-common-drugs" class="level3">
-<h3 class="anchored" data-anchor-id="find-the-most-common-drugs">Find the most common drugs</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">querySql</span>(connection, <span class="st">&quot;</span></span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT</span></span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a><span class="st">    c.concept_name AS drug,</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="st">    COUNT(*) AS n_exposures,</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="st">    COUNT(DISTINCT de.person_id) AS n_patients</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.drug_exposure de</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="st">  JOIN main.concept c ON de.drug_concept_id = c.concept_id</span></span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="st">  GROUP BY c.concept_name</span></span>
-<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="st">  ORDER BY n_patients DESC</span></span>
-<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="st">  LIMIT 15</span></span>
-<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<hr>
-</section>
-</section>
-<section id="sqlrender-across-databases" class="level2">
-<h2 class="anchored" data-anchor-id="sqlrender-across-databases">4. SqlRender Across Databases</h2>
-<p>OHDSI needs SQL that works on PostgreSQL, SQL Server, Oracle, and more. SqlRender translates.</p>
-<section id="load-sqlrender" class="level3">
-<h3 class="anchored" data-anchor-id="load-sqlrender">Load SqlRender</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(SqlRender)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="the-problem-sql-dialects-differ" class="level3">
-<h3 class="anchored" data-anchor-id="the-problem-sql-dialects-differ">The problem: SQL dialects differ</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># SQL Server syntax for &quot;top N rows&quot;</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>sql_server_style <span class="ot">&lt;-</span> <span class="st">&quot;SELECT TOP 10 * FROM person;&quot;</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a><span class="co"># PostgreSQL uses LIMIT</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>postgresql_style <span class="ot">&lt;-</span> <span class="st">&quot;SELECT * FROM person LIMIT 10;&quot;</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Oracle uses ROWNUM</span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>oracle_style <span class="ot">&lt;-</span> <span class="st">&quot;SELECT * FROM person WHERE ROWNUM &lt;= 10;&quot;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Three ways to say the same thing!</p>
-</section>
-<section id="sqlrender-translates-for-you" class="level3">
-<h3 class="anchored" data-anchor-id="sqlrender-translates-for-you">SqlRender translates for you</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Write in OHDSI SQL (SQL Server-ish syntax)</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>sql <span class="ot">&lt;-</span> <span class="st">&quot;SELECT TOP 10 * FROM person;&quot;</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Translate to PostgreSQL</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="fu">translate</span>(sql, <span class="at">targetDialect =</span> <span class="st">&quot;postgresql&quot;</span>)</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Translate to Oracle</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="fu">translate</span>(sql, <span class="at">targetDialect =</span> <span class="st">&quot;oracle&quot;</span>)</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Translate to SQLite (what Eunomia uses)</span></span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a><span class="fu">translate</span>(sql, <span class="at">targetDialect =</span> <span class="st">&quot;sqlite&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="parameterization-with-variables" class="level3">
-<h3 class="anchored" data-anchor-id="parameterization-with-variables">Parameterization with <span class="citation" data-cites="variables">@variables</span></h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Template SQL with parameters</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>sql <span class="ot">&lt;-</span> <span class="st">&quot;</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="st">SELECT *</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="st">FROM @cdm_schema.person</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="st">WHERE year_of_birth &gt;= @min_year</span></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="st">  AND year_of_birth &lt;= @max_year</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Render with specific values</span></span>
-<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="fu">render</span>(sql,</span>
-<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">cdm_schema =</span> <span class="st">&quot;main&quot;</span>,</span>
-<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">min_year =</span> <span class="dv">1950</span>,</span>
-<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">max_year =</span> <span class="dv">1970</span></span>
-<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="combine-render-translate" class="level3">
-<h3 class="anchored" data-anchor-id="combine-render-translate">Combine render + translate</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>sql <span class="ot">&lt;-</span> <span class="st">&quot;</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="st">SELECT TOP 100 *</span></span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="st">FROM @cdm_schema.condition_occurrence</span></span>
-<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="st">WHERE condition_concept_id = @concept_id</span></span>
-<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span></span>
-<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Render parameters</span></span>
-<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>rendered <span class="ot">&lt;-</span> <span class="fu">render</span>(sql,</span>
-<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">cdm_schema =</span> <span class="st">&quot;main&quot;</span>,</span>
-<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">concept_id =</span> <span class="dv">201826</span>  <span class="co"># Type 2 diabetes</span></span>
-<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Translate to target dialect</span></span>
-<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>translated <span class="ot">&lt;-</span> <span class="fu">translate</span>(rendered, <span class="at">targetDialect =</span> <span class="st">&quot;sqlite&quot;</span>)</span>
-<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Execute</span></span>
-<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a><span class="fu">querySql</span>(connection, translated)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="why-this-matters" class="level3">
-<h3 class="anchored" data-anchor-id="why-this-matters">Why this matters</h3>
-<p>You write SQL once. SqlRender handles the differences between:</p>
-<ul>
-<li>Your local SQLite (Eunomia)</li>
-<li>Your institution’s SQL Server</li>
-<li>A collaborator’s PostgreSQL</li>
-<li>A cloud Redshift cluster</li>
-</ul>
-<p>This is how OHDSI runs the same study at 100+ sites.</p>
-<hr>
-</section>
-</section>
-<section id="patient-odyssey" class="level2">
-<h2 class="anchored" data-anchor-id="patient-odyssey">5. Patient Odyssey</h2>
-<p>Let’s follow a single patient through the CDM and understand their healthcare journey.</p>
-<section id="find-a-patient-with-interesting-data" class="level3">
-<h3 class="anchored" data-anchor-id="find-a-patient-with-interesting-data">Find a patient with interesting data</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Find patients with multiple conditions and drugs</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>interesting_patients <span class="ot">&lt;-</span> <span class="fu">querySql</span>(connection, <span class="st">&quot;</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT</span></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a><span class="st">    p.person_id,</span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a><span class="st">    COUNT(DISTINCT co.condition_concept_id) AS n_conditions,</span></span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a><span class="st">    COUNT(DISTINCT de.drug_concept_id) AS n_drugs,</span></span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a><span class="st">    COUNT(DISTINCT vo.visit_occurrence_id) AS n_visits</span></span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.person p</span></span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN main.condition_occurrence co ON p.person_id = co.person_id</span></span>
-<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN main.drug_exposure de ON p.person_id = de.person_id</span></span>
-<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN main.visit_occurrence vo ON p.person_id = vo.person_id</span></span>
-<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a><span class="st">  GROUP BY p.person_id</span></span>
-<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a><span class="st">  HAVING n_conditions &gt; 5 AND n_drugs &gt; 5</span></span>
-<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a><span class="st">  ORDER BY n_visits DESC</span></span>
-<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a><span class="st">  LIMIT 10</span></span>
-<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>)</span>
-<span id="cb22-17"><a href="#cb22-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb22-18"><a href="#cb22-18" aria-hidden="true" tabindex="-1"></a>interesting_patients</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<p>Pick a <code>person_id</code> from this list for our odyssey.</p>
-</section>
-<section id="get-patient-demographics" class="level3">
-<h3 class="anchored" data-anchor-id="get-patient-demographics">Get patient demographics</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Replace with your chosen person_id</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>patient_id <span class="ot">&lt;-</span> <span class="dv">1</span>  <span class="co"># Use a real ID from above</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="fu">querySql</span>(connection, <span class="fu">sprintf</span>(<span class="st">&quot;</span></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT</span></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a><span class="st">    p.person_id,</span></span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a><span class="st">    p.year_of_birth,</span></span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a><span class="st">    g.concept_name AS gender,</span></span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="st">    r.concept_name AS race</span></span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.person p</span></span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN main.concept g ON p.gender_concept_id = g.concept_id</span></span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN main.concept r ON p.race_concept_id = r.concept_id</span></span>
-<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a><span class="st">  WHERE p.person_id = %d</span></span>
-<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>, patient_id))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="get-observation-period" class="level3">
-<h3 class="anchored" data-anchor-id="get-observation-period">Get observation period</h3>
-<p>When do we have data on this patient?</p>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">querySql</span>(connection, <span class="fu">sprintf</span>(<span class="st">&quot;</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT</span></span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="st">    observation_period_start_date,</span></span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="st">    observation_period_end_date</span></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.observation_period</span></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="st">  WHERE person_id = %d</span></span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>, patient_id))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="get-their-conditions" class="level3">
-<h3 class="anchored" data-anchor-id="get-their-conditions">Get their conditions</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>patient_conditions <span class="ot">&lt;-</span> <span class="fu">querySql</span>(connection, <span class="fu">sprintf</span>(<span class="st">&quot;</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT</span></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="st">    co.condition_start_date,</span></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="st">    c.concept_name AS condition,</span></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="st">    c.concept_id,</span></span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="st">    v.concept_name AS visit_type</span></span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.condition_occurrence co</span></span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a><span class="st">  JOIN main.concept c ON co.condition_concept_id = c.concept_id</span></span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN main.visit_occurrence vo ON co.visit_occurrence_id = vo.visit_occurrence_id</span></span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a><span class="st">  LEFT JOIN main.concept v ON vo.visit_concept_id = v.concept_id</span></span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="st">  WHERE co.person_id = %d</span></span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a><span class="st">  ORDER BY co.condition_start_date</span></span>
-<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>, patient_id))</span>
-<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>patient_conditions</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="get-their-drug-exposures" class="level3">
-<h3 class="anchored" data-anchor-id="get-their-drug-exposures">Get their drug exposures</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>patient_drugs <span class="ot">&lt;-</span> <span class="fu">querySql</span>(connection, <span class="fu">sprintf</span>(<span class="st">&quot;</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a><span class="st">    de.drug_exposure_start_date,</span></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a><span class="st">    c.concept_name AS drug,</span></span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a><span class="st">    c.concept_id,</span></span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="st">    de.quantity,</span></span>
-<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="st">    de.days_supply</span></span>
-<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.drug_exposure de</span></span>
-<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a><span class="st">  JOIN main.concept c ON de.drug_concept_id = c.concept_id</span></span>
-<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="st">  WHERE de.person_id = %d</span></span>
-<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a><span class="st">  ORDER BY de.drug_exposure_start_date</span></span>
-<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>, patient_id))</span>
-<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>patient_drugs</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="visualize-the-patient-timeline" class="level3">
-<h3 class="anchored" data-anchor-id="visualize-the-patient-timeline">Visualize the patient timeline</h3>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Combine conditions and drugs into a timeline</span></span>
-<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>conditions_timeline <span class="ot">&lt;-</span> patient_conditions <span class="sc">|&gt;</span></span>
-<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="at">date =</span> CONDITION_START_DATE, <span class="at">event =</span> CONDITION, <span class="at">type =</span> <span class="st">&quot;Condition&quot;</span>)</span>
-<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>drugs_timeline <span class="ot">&lt;-</span> patient_drugs <span class="sc">|&gt;</span></span>
-<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="at">date =</span> DRUG_EXPOSURE_START_DATE, <span class="at">event =</span> DRUG, <span class="at">type =</span> <span class="st">&quot;Drug&quot;</span>)</span>
-<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>timeline <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(conditions_timeline, drugs_timeline) <span class="sc">|&gt;</span></span>
-<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">date =</span> <span class="fu">as.Date</span>(date)) <span class="sc">|&gt;</span></span>
-<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(date)</span>
-<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot</span></span>
-<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(timeline, <span class="fu">aes</span>(<span class="at">x =</span> date, <span class="at">y =</span> event, <span class="at">color =</span> type)) <span class="sc">+</span></span>
-<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
-<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">sprintf</span>(<span class="st">&quot;Patient %d Healthcare Timeline&quot;</span>, patient_id),</span>
-<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">&quot;Date&quot;</span>,</span>
-<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">&quot;&quot;</span>,</span>
-<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">color =</span> <span class="st">&quot;Event Type&quot;</span></span>
-<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
-<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">8</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-</section>
-<section id="how-the-data-connects" class="level3">
-<h3 class="anchored" data-anchor-id="how-the-data-connects">How the data connects</h3>
-<p>For any patient, the data flows like this:</p>
-<ol type="1">
-<li>Start with <code>person</code> (demographics)</li>
-<li>Check <code>observation_period</code> to see when we have data</li>
-<li>Look at <code>visit_occurrence</code> to find their encounters</li>
-<li>From visits, find clinical events: <code>condition_occurrence</code>, <code>drug_exposure</code>, <code>procedure_occurrence</code>, <code>measurement</code></li>
-<li>Join any <code>*_concept_id</code> column to <code>concept</code> to get human-readable names</li>
-</ol>
-</section>
-<section id="questions-to-explore" class="level3">
-<h3 class="anchored" data-anchor-id="questions-to-explore">Questions to explore</h3>
-<ol type="1">
-<li>Does this patient have conditions that match their drug exposures? (e.g., diabetes + metformin)</li>
-<li>What’s the time gap between diagnosis and first treatment?</li>
-<li>Are there any emergency visits? What happened?</li>
-</ol>
-<hr>
-</section>
-</section>
-<section id="atlas-cohort-definitions" class="level2">
-<h2 class="anchored" data-anchor-id="atlas-cohort-definitions">6. ATLAS Cohort Definitions</h2>
-<p>ATLAS is OHDSI’s web-based tool for defining cohorts and analyses. Let’s see how cohorts translate to SQL.</p>
-<section id="access-the-atlas-demo" class="level3">
-<h3 class="anchored" data-anchor-id="access-the-atlas-demo">Access the ATLAS demo</h3>
-<p>Open in your browser: <a href="https://atlas-demo.ohdsi.org" class="uri">https://atlas-demo.ohdsi.org</a></p>
-<p><em>(Note: This is a public demo instance - no real patient data)</em></p>
-</section>
-<section id="explore-existing-cohort-definitions" class="level3">
-<h3 class="anchored" data-anchor-id="explore-existing-cohort-definitions">Explore existing cohort definitions</h3>
-<ol type="1">
-<li>Click <strong>Cohort Definitions</strong> in the left menu</li>
-<li>Browse the existing cohorts</li>
-<li>Click on one to see its definition</li>
-</ol>
-</section>
-<section id="anatomy-of-a-cohort-definition" class="level3">
-<h3 class="anchored" data-anchor-id="anatomy-of-a-cohort-definition">Anatomy of a cohort definition</h3>
-<p>A cohort has:</p>
-<ul>
-<li><strong>Entry criteria</strong>: How does someone enter the cohort?</li>
-<li><strong>Inclusion criteria</strong>: Additional requirements to stay in</li>
-<li><strong>Exit criteria</strong>: When does someone leave the cohort?</li>
-</ul>
-</section>
-<section id="view-the-generated-sql" class="level3">
-<h3 class="anchored" data-anchor-id="view-the-generated-sql">View the generated SQL</h3>
-<p>In any cohort definition:</p>
-<ol type="1">
-<li>Click the <strong>Export</strong> tab</li>
-<li>Select <strong>SQL</strong> format</li>
-<li>See the generated SQL code</li>
-</ol>
-<p>This SQL can run on any OMOP CDM database!</p>
-</section>
-<section id="example-type-2-diabetes-cohort" class="level3">
-<h3 class="anchored" data-anchor-id="example-type-2-diabetes-cohort">Example: Type 2 Diabetes cohort</h3>
-<p>A simple T2DM cohort might have:</p>
-<p><strong>Entry criteria:</strong> - First diagnosis of Type 2 diabetes (concept 201826)</p>
-<p><strong>Inclusion criteria:</strong> - Age ≥ 18 at diagnosis - At least 365 days of prior observation</p>
-<p><strong>Exit criteria:</strong> - End of observation period</p>
-</section>
-<section id="the-generated-sql" class="level3">
-<h3 class="anchored" data-anchor-id="the-generated-sql">The generated SQL</h3>
-<p>ATLAS generates complex SQL that:</p>
-<ol type="1">
-<li>Finds all qualifying entry events</li>
-<li>Applies inclusion criteria</li>
-<li>Handles overlapping periods</li>
-<li>Outputs the standard cohort format</li>
-</ol>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb28"><pre class="sourceCode sql code-with-copy"><code class="sourceCode sql"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Simplified example of what ATLAS generates</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="kw">INSERT</span> <span class="kw">INTO</span> cohort (</span>
-<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  cohort_definition_id,</span>
-<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  subject_id,</span>
-<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  cohort_start_date,</span>
-<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  cohort_end_date</span>
-<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="kw">SELECT</span></span>
-<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>  <span class="dv">1</span> <span class="kw">AS</span> cohort_definition_id,</span>
-<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>  person_id <span class="kw">AS</span> subject_id,</span>
-<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>  condition_start_date <span class="kw">AS</span> cohort_start_date,</span>
-<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>  observation_period_end_date <span class="kw">AS</span> cohort_end_date</span>
-<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a><span class="kw">FROM</span> condition_occurrence co</span>
-<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a><span class="kw">JOIN</span> observation_period op <span class="kw">ON</span> co.person_id <span class="op">=</span> op.person_id</span>
-<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a><span class="kw">WHERE</span> condition_concept_id <span class="op">=</span> <span class="dv">201826</span></span>
-<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>  <span class="kw">AND</span> DATEDIFF(<span class="dt">year</span>, birth_datetime, condition_start_date) <span class="op">&gt;=</span> <span class="dv">18</span></span>
-<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a>  <span class="kw">AND</span> DATEDIFF(<span class="dt">day</span>, observation_period_start_date, condition_start_date) <span class="op">&gt;=</span> <span class="dv">365</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="why-this-matters-1" class="level3">
-<h3 class="anchored" data-anchor-id="why-this-matters-1">Why this matters</h3>
-<ul>
-<li><strong>Reproducibility</strong>: The SQL precisely defines who’s in the cohort</li>
-<li><strong>Portability</strong>: Run the same definition at any OHDSI site</li>
-<li><strong>Transparency</strong>: Review and audit the exact criteria</li>
-</ul>
-</section>
-<section id="exercise-build-your-own" class="level3">
-<h3 class="anchored" data-anchor-id="exercise-build-your-own">Exercise: Build your own</h3>
-<p>In ATLAS demo:</p>
-<ol type="1">
-<li>Click <strong>New Cohort Definition</strong></li>
-<li>Name it “Practice - [Your Name]”</li>
-<li>Add an initial event (try a condition)</li>
-<li>Add an inclusion criterion</li>
-<li>Export and examine the SQL</li>
-</ol>
-<hr>
-</section>
-</section>
-<section id="clean-up" class="level2">
-<h2 class="anchored" data-anchor-id="clean-up">Clean up</h2>
-<div class="cell">
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">disconnect</span>(connection)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</div>
-<hr>
-</section>
-<section id="summary" class="level2">
-<h2 class="anchored" data-anchor-id="summary">Summary</h2>
-<p>Today we covered:</p>
-<ul>
-<li><strong>Git:</strong> Create repos, stage, commit, push/pull</li>
-<li><strong>CDM Schema:</strong> Table structure, relationships via person_id and concept_id</li>
-<li><strong>Eunomia:</strong> Local CDM practice, SQL queries</li>
-<li><strong>SqlRender:</strong> Dialect translation for multi-site compatibility</li>
-<li><strong>Patient Odyssey:</strong> Following one patient through connected tables</li>
-<li><strong>ATLAS:</strong> Visual cohort building to SQL generation</li>
-</ul>
-<section id="key-takeaways" class="level3">
-<h3 class="anchored" data-anchor-id="key-takeaways">Key takeaways</h3>
-<ol type="1">
-<li><strong>Git</strong> tracks your code history - use it for every project</li>
-<li><strong>Remote databases</strong> solve scale, security, and collaboration problems</li>
-<li><strong>OHDSI’s SQL tools</strong> let you write once, run anywhere</li>
-<li>The <strong>CDM connects</strong> through <code>person_id</code> and <code>concept_id</code></li>
-<li><strong>ATLAS</strong> translates visual cohort definitions to executable SQL</li>
-</ol>
-</section>
-<section id="resources" class="level3">
-<h3 class="anchored" data-anchor-id="resources">Resources</h3>
-<ul>
-<li>Git tutorial: <a href="https://git-scm.com/book/en/v2" class="uri">https://git-scm.com/book/en/v2</a></li>
-<li>OMOP CDM docs: <a href="https://ohdsi.github.io/CommonDataModel/" class="uri">https://ohdsi.github.io/CommonDataModel/</a></li>
-<li>SqlRender: <a href="https://ohdsi.github.io/SqlRender/" class="uri">https://ohdsi.github.io/SqlRender/</a></li>
+<li>CohortDiagnostics: <a href="https://ohdsi.github.io/CohortDiagnostics/" class="uri">https://ohdsi.github.io/CohortDiagnostics/</a></li>
+<li>CohortGenerator: <a href="https://ohdsi.github.io/CohortGenerator/" class="uri">https://ohdsi.github.io/CohortGenerator/</a></li>
+<li>Capr (R cohort builder): <a href="https://ohdsi.github.io/Capr/" class="uri">https://ohdsi.github.io/Capr/</a></li>
 <li>ATLAS demo: <a href="https://atlas-demo.ohdsi.org" class="uri">https://atlas-demo.ohdsi.org</a></li>
-<li>The Book of OHDSI: <a href="https://ohdsi.github.io/TheBookOfOhdsi/" class="uri">https://ohdsi.github.io/TheBookOfOhdsi/</a></li>
+<li>The Book of OHDSI, Chapter 12 (Cohorts): <a href="https://ohdsi.github.io/TheBookOfOhdsi/" class="uri">https://ohdsi.github.io/TheBookOfOhdsi/</a></li>
 </ul>
-</section>
-<section id="next-session" class="level3">
-<h3 class="anchored" data-anchor-id="next-session">Next session</h3>
-<p>We’ll dive deeper into cohort definitions and start working with HADES packages for analysis.</p>
-</section>
 </section>
 
 </main>

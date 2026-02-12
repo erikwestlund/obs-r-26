@@ -1,0 +1,273 @@
+---
+title: "Module 04: Cohort Definitions and Diagnostics"
+subtitle: "Exploring OHDSI Cohort Definitions and Building Intuition for Cohort Diagnostics"
+editor_options:
+  chunk_output_type: console
+---
+
+## Agenda
+
+1. **Exploring the OMOP CDM** — Download Eunomia, read the raw tables, see how it all connects
+2. **Cohort Definitions** — Pull definitions from CohortDiagnostics, examine JSON and SQL
+3. **Naive Cohort Diagnostics with dplyr** — Build diagnostic visualizations by hand
+4. **Transition to CohortDiagnostics** — Why the package exists
+
+---
+
+## 1. Exploring the OMOP CDM
+
+Eunomia is typically accessed through the `Eunomia` R package, which wraps a SQLite database. But under the hood, it's just a set of CSV files in the OMOP CDM format. Let's download the raw data and look at it directly.
+
+### Download and extract
+
+```{r}
+#| eval: false
+library(dplyr)
+library(readr)
+library(tidyr)
+library(ggplot2)
+
+# Download the Eunomia GiBleed dataset
+eunomia_url <- "https://raw.githubusercontent.com/OHDSI/EunomiaDatasets/main/datasets/GiBleed/GiBleed_5.3.zip"
+zip_path <- file.path(tempdir(), "GiBleed_5.3.zip")
+download.file(eunomia_url, zip_path, mode = "wb")
+
+# Unzip
+data_dir <- file.path(tempdir(), "GiBleed_5.3")
+unzip(zip_path, exdir = tempdir())
+
+# What files do we have?
+list.files(data_dir) |> sort()
+```
+
+Every file is one OMOP CDM table, stored as a CSV. This is the same data that Eunomia loads into SQLite — we're just looking at it raw.
+
+### Read the core tables
+
+```{r}
+#| eval: false
+person <- read_csv(file.path(data_dir, "PERSON.csv"), show_col_types = FALSE)
+observation_period <- read_csv(file.path(data_dir, "OBSERVATION_PERIOD.csv"), show_col_types = FALSE)
+condition_occurrence <- read_csv(file.path(data_dir, "CONDITION_OCCURRENCE.csv"), show_col_types = FALSE)
+drug_exposure <- read_csv(file.path(data_dir, "DRUG_EXPOSURE.csv"), show_col_types = FALSE)
+visit_occurrence <- read_csv(file.path(data_dir, "VISIT_OCCURRENCE.csv"), show_col_types = FALSE)
+measurement <- read_csv(file.path(data_dir, "MEASUREMENT.csv"), show_col_types = FALSE)
+procedure_occurrence <- read_csv(file.path(data_dir, "PROCEDURE_OCCURRENCE.csv"), show_col_types = FALSE)
+concept <- read_csv(file.path(data_dir, "CONCEPT.csv"), show_col_types = FALSE)
+concept_ancestor <- read_csv(file.path(data_dir, "CONCEPT_ANCESTOR.csv"), show_col_types = FALSE)
+cohort <- read_csv(file.path(data_dir, "COHORT.csv"), show_col_types = FALSE)
+```
+
+### How big is this dataset?
+
+```{r}
+#| eval: false
+tibble(
+  table = c("person", "observation_period", "condition_occurrence",
+            "drug_exposure", "visit_occurrence", "measurement",
+            "procedure_occurrence", "concept", "concept_ancestor", "cohort"),
+  rows = c(nrow(person), nrow(observation_period), nrow(condition_occurrence),
+           nrow(drug_exposure), nrow(visit_occurrence), nrow(measurement),
+           nrow(procedure_occurrence), nrow(concept), nrow(concept_ancestor),
+           nrow(cohort))
+)
+```
+
+### The person table
+
+Demographics. Every patient has exactly one row here.
+
+```{r}
+#| eval: false
+names(person)
+person |> head()
+```
+
+Notice the `*_concept_id` columns: `GENDER_CONCEPT_ID`, `RACE_CONCEPT_ID`, `ETHNICITY_CONCEPT_ID`. These are codes, not human-readable names. To decode them, we need the `concept` table.
+
+### The concept table: the Rosetta Stone
+
+```{r}
+#| eval: false
+names(concept)
+concept |> head()
+```
+
+This table maps `CONCEPT_ID` values to human-readable names, vocabularies, and domains.
+
+```{r}
+#| eval: false
+# What gender concepts are used?
+person |>
+  distinct(GENDER_CONCEPT_ID) |>
+  left_join(concept, by = c("GENDER_CONCEPT_ID" = "CONCEPT_ID")) |>
+  select(GENDER_CONCEPT_ID, CONCEPT_NAME, VOCABULARY_ID)
+```
+
+This dataset doesn't label race concepts, but we could look them up at Athena: [https://athena.ohdsi.org/search-terms/terms/8516].ss
+
+```{r}
+#| eval: false
+# What race concepts?
+person |>
+  distinct(RACE_CONCEPT_ID) |>
+  left_join(concept, by = c("RACE_CONCEPT_ID" = "CONCEPT_ID")) |>
+  select(RACE_CONCEPT_ID, CONCEPT_NAME, VOCABULARY_ID)
+```
+
+This is the pattern everywhere in OMOP: a `*_concept_id` column holds a code, and you join to `concept` to get the name. The vocabulary system standardizes across ICD, SNOMED, RxNorm, LOINC, and more.
+
+### Observation period
+
+When do we have data on each person? This table defines the window of time during which a person's records are considered complete.
+
+```{r}
+#| eval: false
+observation_period |> head()
+
+# How many observation periods per person?
+observation_period |>
+  count(PERSON_ID, name = "n_periods") |>
+  count(n_periods, name = "n_people")
+```
+
+### Condition occurrence
+
+Diagnoses. Each row is one recorded condition for one person.
+
+```{r}
+#| eval: false
+names(condition_occurrence)
+condition_occurrence |> head()
+```
+
+The `CONDITION_CONCEPT_ID` is the standardized code. Let's see what the most common conditions are:
+
+```{r}
+#| eval: false
+z <- condition_occurrence |>
+  count(CONDITION_CONCEPT_ID, sort = TRUE) |>
+  head(50) |>
+  left_join(concept, by = c("CONDITION_CONCEPT_ID" = "CONCEPT_ID")) |>
+  select(CONDITION_CONCEPT_ID, CONCEPT_NAME, n) |>
+  print(n = 25)
+```
+
+This is the GiBleed dataset, so gastrointestinal hemorrhage (concept 192671) should be prominent.
+
+### Drug exposure
+
+Medications. Each row is one drug exposure for one person.
+
+```{r}
+#| eval: false
+names(drug_exposure)
+drug_exposure |> head()
+```
+
+```{r}
+#| eval: false
+# Most common drugs
+drug_exposure |>
+  count(DRUG_CONCEPT_ID, sort = TRUE) |>
+  head(15) |>
+  left_join(concept, by = c("DRUG_CONCEPT_ID" = "CONCEPT_ID")) |>
+  select(DRUG_CONCEPT_ID, CONCEPT_NAME, VOCABULARY_ID, n)
+```
+
+You should see NSAIDs like celecoxib and diclofenac. The GiBleed dataset is designed around the GI bleeds and NSAIDs.
+
+### How the tables connect
+
+Everything connects through two keys:
+
+- **`PERSON_ID`** — links clinical events to a patient
+- **`CONCEPT_ID`** — standardizes meaning across vocabularies
+
+Let's follow one patient through the data:
+
+```{r}
+#| eval: false
+# Pick a patient with interesting data
+patient_summary <- condition_occurrence |>
+  group_by(PERSON_ID) |>
+  summarise(n_conditions = n_distinct(CONDITION_CONCEPT_ID)) |>
+  arrange(desc(n_conditions)) |>
+  head(1)
+
+pid <- patient_summary$PERSON_ID[1]
+cat("Patient", pid, "has", patient_summary$n_conditions[1], "distinct conditions")
+```
+
+```{r}
+#| eval: false
+# Demographics
+person |>
+  filter(PERSON_ID == pid) |>
+  left_join(concept |> select(CONCEPT_ID, gender = CONCEPT_NAME),
+            by = c("GENDER_CONCEPT_ID" = "CONCEPT_ID")) |>
+  left_join(concept |> select(CONCEPT_ID, race = CONCEPT_NAME),
+            by = c("RACE_CONCEPT_ID" = "CONCEPT_ID")) |>
+  select(PERSON_ID, YEAR_OF_BIRTH, gender, race)
+```
+
+```{r}
+#| eval: false
+# Their conditions
+condition_occurrence |>
+  filter(PERSON_ID == pid) |>
+  left_join(concept, by = c("CONDITION_CONCEPT_ID" = "CONCEPT_ID")) |>
+  select(CONDITION_START_DATE, CONCEPT_NAME) |>
+  arrange(CONDITION_START_DATE)
+```
+
+```{r}
+#| eval: false
+# Their drugs
+drug_exposure |>
+  filter(PERSON_ID == pid) |>
+  left_join(concept, by = c("DRUG_CONCEPT_ID" = "CONCEPT_ID")) |>
+  select(DRUG_EXPOSURE_START_DATE, CONCEPT_NAME, DAYS_SUPPLY) |>
+  arrange(DRUG_EXPOSURE_START_DATE)
+```
+
+### The cohort table
+
+```{r}
+#| eval: false
+names(cohort)
+nrow(cohort)
+```
+
+Four columns: `COHORT_DEFINITION_ID`, `SUBJECT_ID`, `COHORT_START_DATE`, `COHORT_END_DATE`. It's empty because cohorts don't exist in the raw data. They're *created* by running a cohort definition against the CDM. That's the topic of the next section.
+
+### The concept ancestor table
+
+This table encodes vocabulary hierarchies. It lets you find, for example, all specific drugs that fall under the broader concept of "NSAIDs."
+
+```{r}
+#| eval: false
+concept_ancestor |> head()
+
+# Find celecoxib (1118084) and its ancestors
+concept_ancestor |>
+  filter(DESCENDANT_CONCEPT_ID == 1118084) |>
+  left_join(concept |> select(CONCEPT_ID, ancestor_name = CONCEPT_NAME),
+            by = c("ANCESTOR_CONCEPT_ID" = "CONCEPT_ID")) |>
+  select(ancestor_name, MIN_LEVELS_OF_SEPARATION, MAX_LEVELS_OF_SEPARATION) |>
+  arrange(MIN_LEVELS_OF_SEPARATION)
+```
+
+This hierarchical structure is how OHDSI cohort definitions can specify "any NSAID" rather than listing every specific formulation.
+
+### Summary
+
+The OMOP CDM is a set of connected tables. We just explored the same data that Eunomia and DatabaseConnector abstract behind a SQL interface , but it's all just tables linked by `person_id` and `concept_id`. The cohort table is empty because cohorts are the *output* of running a cohort definition. That's what we'll look at next.
+
+## Resources
+
+- CohortDiagnostics: <https://ohdsi.github.io/CohortDiagnostics/>
+- CohortGenerator: <https://ohdsi.github.io/CohortGenerator/>
+- Capr (R cohort builder): <https://ohdsi.github.io/Capr/>
+- ATLAS demo: <https://atlas-demo.ohdsi.org>
+- The Book of OHDSI, Chapter 12 (Cohorts): <https://ohdsi.github.io/TheBookOfOhdsi/>
