@@ -74,15 +74,6 @@ Two keys unlock the whole CDM:
 - **`person_id`** connects clinical events to patients
 - **`concept_id`** standardizes meaning across vocabularies
 
-```
-person ←─ person_id ─→ condition_occurrence
-                              │
-                        concept_id
-                              │
-                        concept table
-                              │
-                    "Type 2 diabetes mellitus"
-```
 
 ## Eunomia: Our Practice CDM
 

@@ -1169,13 +1169,6 @@ Hospital C data ──→ OMOP CDM ──┘</code></pre>
 <li><strong><code>person_id</code></strong> connects clinical events to patients</li>
 <li><strong><code>concept_id</code></strong> standardizes meaning across vocabularies</li>
 </ul>
-<pre><code>person ←─ person_id ─→ condition_occurrence
-                              │
-                        concept_id
-                              │
-                        concept table
-                              │
-                    &quot;Type 2 diabetes mellitus&quot;</code></pre>
 </section>
 <section id="eunomia-our-practice-cdm" class="slide level2 center">
 <h2>Eunomia: Our Practice CDM</h2>
@@ -1325,40 +1318,40 @@ Hospital C data ──→ OMOP CDM ──┘</code></pre>
 </section>
 <section id="json-the-specification" class="slide level2 center">
 <h2>JSON: The Specification</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource json number-lines code-with-copy"><code class="sourceCode json"><span id="cb4-1"><a href></a><span class="fu">{</span></span>
-<span id="cb4-2"><a href></a>  <span class="dt">&quot;ConceptSets&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="fu">{</span></span>
-<span id="cb4-3"><a href></a>    <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span></span>
-<span id="cb4-4"><a href></a>    <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Type 2 DM&quot;</span><span class="fu">,</span></span>
-<span id="cb4-5"><a href></a>    <span class="dt">&quot;expression&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb4-6"><a href></a>      <span class="dt">&quot;items&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="fu">{</span></span>
-<span id="cb4-7"><a href></a>        <span class="dt">&quot;concept&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
-<span id="cb4-8"><a href></a>          <span class="dt">&quot;CONCEPT_ID&quot;</span><span class="fu">:</span> <span class="dv">201826</span><span class="fu">,</span></span>
-<span id="cb4-9"><a href></a>          <span class="dt">&quot;CONCEPT_NAME&quot;</span><span class="fu">:</span> <span class="st">&quot;Type 2 diabetes mellitus&quot;</span></span>
-<span id="cb4-10"><a href></a>        <span class="fu">}</span></span>
-<span id="cb4-11"><a href></a>      <span class="fu">}</span><span class="ot">]</span></span>
-<span id="cb4-12"><a href></a>    <span class="fu">}</span></span>
-<span id="cb4-13"><a href></a>  <span class="fu">}</span><span class="ot">]</span><span class="fu">,</span></span>
-<span id="cb4-14"><a href></a>  <span class="dt">&quot;PrimaryCriteria&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;...&quot;</span> <span class="fu">},</span></span>
-<span id="cb4-15"><a href></a>  <span class="dt">&quot;QualifiedLimit&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;...&quot;</span> <span class="fu">}</span></span>
-<span id="cb4-16"><a href></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode numberSource json number-lines code-with-copy"><code class="sourceCode json"><span id="cb3-1"><a href></a><span class="fu">{</span></span>
+<span id="cb3-2"><a href></a>  <span class="dt">&quot;ConceptSets&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="fu">{</span></span>
+<span id="cb3-3"><a href></a>    <span class="dt">&quot;id&quot;</span><span class="fu">:</span> <span class="dv">0</span><span class="fu">,</span></span>
+<span id="cb3-4"><a href></a>    <span class="dt">&quot;name&quot;</span><span class="fu">:</span> <span class="st">&quot;Type 2 DM&quot;</span><span class="fu">,</span></span>
+<span id="cb3-5"><a href></a>    <span class="dt">&quot;expression&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb3-6"><a href></a>      <span class="dt">&quot;items&quot;</span><span class="fu">:</span> <span class="ot">[</span><span class="fu">{</span></span>
+<span id="cb3-7"><a href></a>        <span class="dt">&quot;concept&quot;</span><span class="fu">:</span> <span class="fu">{</span></span>
+<span id="cb3-8"><a href></a>          <span class="dt">&quot;CONCEPT_ID&quot;</span><span class="fu">:</span> <span class="dv">201826</span><span class="fu">,</span></span>
+<span id="cb3-9"><a href></a>          <span class="dt">&quot;CONCEPT_NAME&quot;</span><span class="fu">:</span> <span class="st">&quot;Type 2 diabetes mellitus&quot;</span></span>
+<span id="cb3-10"><a href></a>        <span class="fu">}</span></span>
+<span id="cb3-11"><a href></a>      <span class="fu">}</span><span class="ot">]</span></span>
+<span id="cb3-12"><a href></a>    <span class="fu">}</span></span>
+<span id="cb3-13"><a href></a>  <span class="fu">}</span><span class="ot">]</span><span class="fu">,</span></span>
+<span id="cb3-14"><a href></a>  <span class="dt">&quot;PrimaryCriteria&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;...&quot;</span> <span class="fu">},</span></span>
+<span id="cb3-15"><a href></a>  <span class="dt">&quot;QualifiedLimit&quot;</span><span class="fu">:</span> <span class="fu">{</span> <span class="dt">&quot;...&quot;</span> <span class="fu">}</span></span>
+<span id="cb3-16"><a href></a><span class="fu">}</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Describes the cohort logic declaratively.</p>
 </section>
 <section id="sql-the-implementation" class="slide level2 center">
 <h2>SQL: The Implementation</h2>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode numberSource sql number-lines code-with-copy"><code class="sourceCode sql"><span id="cb5-1"><a href></a><span class="kw">INSERT</span> <span class="kw">INTO</span> @target_cohort_table (</span>
-<span id="cb5-2"><a href></a>  cohort_definition_id, subject_id,</span>
-<span id="cb5-3"><a href></a>  cohort_start_date, cohort_end_date</span>
-<span id="cb5-4"><a href></a>)</span>
-<span id="cb5-5"><a href></a><span class="kw">SELECT</span> @target_cohort_id <span class="kw">AS</span> cohort_definition_id,</span>
-<span id="cb5-6"><a href></a>       person_id <span class="kw">AS</span> subject_id,</span>
-<span id="cb5-7"><a href></a>       condition_start_date <span class="kw">AS</span> cohort_start_date,</span>
-<span id="cb5-8"><a href></a>       op.observation_period_end_date <span class="kw">AS</span> cohort_end_date</span>
-<span id="cb5-9"><a href></a><span class="kw">FROM</span> condition_occurrence co</span>
-<span id="cb5-10"><a href></a><span class="kw">JOIN</span> observation_period op</span>
-<span id="cb5-11"><a href></a>  <span class="kw">ON</span> co.person_id <span class="op">=</span> op.person_id</span>
-<span id="cb5-12"><a href></a><span class="kw">WHERE</span> condition_concept_id <span class="kw">IN</span> (</span>
-<span id="cb5-13"><a href></a>  <span class="kw">SELECT</span> concept_id <span class="kw">FROM</span> @concept_set_0</span>
-<span id="cb5-14"><a href></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode numberSource sql number-lines code-with-copy"><code class="sourceCode sql"><span id="cb4-1"><a href></a><span class="kw">INSERT</span> <span class="kw">INTO</span> @target_cohort_table (</span>
+<span id="cb4-2"><a href></a>  cohort_definition_id, subject_id,</span>
+<span id="cb4-3"><a href></a>  cohort_start_date, cohort_end_date</span>
+<span id="cb4-4"><a href></a>)</span>
+<span id="cb4-5"><a href></a><span class="kw">SELECT</span> @target_cohort_id <span class="kw">AS</span> cohort_definition_id,</span>
+<span id="cb4-6"><a href></a>       person_id <span class="kw">AS</span> subject_id,</span>
+<span id="cb4-7"><a href></a>       condition_start_date <span class="kw">AS</span> cohort_start_date,</span>
+<span id="cb4-8"><a href></a>       op.observation_period_end_date <span class="kw">AS</span> cohort_end_date</span>
+<span id="cb4-9"><a href></a><span class="kw">FROM</span> condition_occurrence co</span>
+<span id="cb4-10"><a href></a><span class="kw">JOIN</span> observation_period op</span>
+<span id="cb4-11"><a href></a>  <span class="kw">ON</span> co.person_id <span class="op">=</span> op.person_id</span>
+<span id="cb4-12"><a href></a><span class="kw">WHERE</span> condition_concept_id <span class="kw">IN</span> (</span>
+<span id="cb4-13"><a href></a>  <span class="kw">SELECT</span> concept_id <span class="kw">FROM</span> @concept_set_0</span>
+<span id="cb4-14"><a href></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <p>Actually runs against the database.</p>
 </section>
 <section id="why-two-formats" class="slide level2 center">
