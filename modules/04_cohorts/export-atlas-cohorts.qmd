@@ -1,0 +1,764 @@
+---
+title: "Module: ATLAS Cohorts → CohortDiagnostics on Eunomia"
+subtitle: "Exporting Cohort Definitions from WebAPI, Saving Locally, and Running Diagnostics"
+---
+
+```{r}
+#| include: false
+# This module demonstrates the real-world workflow:
+#   1. Pull cohort definitions from a live ATLAS instance via ROhdsiWebApi
+#   2. Save them in the standard OHDSI project layout
+#   3. Generate cohorts against a local Eunomia CDM
+#   4. Run CohortDiagnostics and explore results
+#
+# The example cohorts come from a pharmacovigilance study examining
+# infections and autoimmune conditions in the context of immunosuppressive
+# therapies (rituximab, JAK inhibitors, MMF, IVIG).
+```
+
+## Agenda
+
+1. **Package Installation** (One-time setup)
+2. **Connect to ATLAS WebAPI** (Accessing cohort definitions remotely)
+3. **Export Cohort Definitions** (Pulling JSON + SQL from ATLAS)
+4. **Rename & Organize** (Clean labels, standard folder layout)
+5. **Save Cohort Definition Set** (Persistent local storage)
+6. **Connect to Eunomia** (Local synthetic CDM)
+7. **Generate Cohorts** (Instantiate against Eunomia)
+8. **Run CohortDiagnostics** (Full diagnostic suite)
+9. **Explore Results** (Shiny viewer)
+10. **Discussion & Exercises**
+
+---
+
+## 1. Package Installation
+
+We need the standard OHDSI stack plus `ROhdsiWebApi` for communicating with ATLAS.
+
+```{r}
+#| eval: false
+# CRAN packages
+install.packages(c("DatabaseConnector", "SqlRender", "dplyr"))
+
+# Eunomia (synthetic OMOP CDM)
+install.packages("Eunomia")
+
+# OHDSI GitHub packages
+install.packages("remotes")
+remotes::install_github("OHDSI/ROhdsiWebApi")
+remotes::install_github("OHDSI/CohortGenerator")
+remotes::install_github("OHDSI/CohortDiagnostics")
+```
+
+> **Troubleshooting:** If you hit compilation errors on Windows, ensure [Rtools](https://cran.r-project.org/bin/windows/Rtools/) is installed and on your PATH. On macOS, run `xcode-select --install` for command-line tools.
+
+### Load libraries
+
+```{r}
+#| eval: false
+library(dplyr)
+library(DatabaseConnector)
+library(Eunomia)
+library(ROhdsiWebApi)
+library(CohortGenerator)
+library(CohortDiagnostics)
+```
+
+---
+
+## 2. Connect to ATLAS WebAPI
+
+ATLAS exposes a REST API called **WebAPI** that lets you programmatically access cohort definitions, concept sets, and other artifacts. The public demo instance doesn't require authentication.
+
+```{r}
+#| eval: false
+baseUrl <- "https://atlas-demo.ohdsi.org/WebAPI"
+```
+
+If your institution's ATLAS has security enabled, you'd authenticate first:
+
+```{r}
+#| eval: false
+# Uncomment and configure for secured instances:
+# ROhdsiWebApi::authorizeWebApi(
+#   baseUrl = baseUrl,
+#   authMethod = "windows"  # or "db", "ad", etc.
+# )
+```
+
+### Verify the connection
+
+```{r}
+#| eval: false
+# List available data sources on this WebAPI
+ROhdsiWebApi::getWebApiVersion(baseUrl = baseUrl)
+```
+
+If this returns a version string, you're connected.
+
+### Browse available cohorts (optional)
+
+```{r}
+#| eval: false
+# See all cohort definitions on the demo server
+allCohorts <- ROhdsiWebApi::getCohortDefinitionsMetaData(baseUrl = baseUrl)
+
+# That's a lot of cohorts. Let's look at the structure:
+allCohorts |>
+  select(id, name) |>
+  head(20)
+```
+
+> **Note:** The demo ATLAS has thousands of community-created cohorts. We'll pull a specific set of 17 cohorts for a pharmacovigilance study.
+
+---
+
+## 3. Export Cohort Definitions from ATLAS
+
+This is the key step: `exportCohortDefinitionSet()` pulls each cohort's JSON logic and generated SQL from WebAPI and assembles them into a `cohortDefinitionSet` data frame — the standard object that CohortGenerator and CohortDiagnostics expect.
+
+### Our study cohorts
+
+We're working with cohorts from a pharmacovigilance study that examines opportunistic infections and autoimmune conditions in the context of immunosuppressive therapies:
+
+**Outcome cohorts (infections):**
+
+- Pneumocystis pneumonia — 4 phenotype variants (Total, Case1, Case2, Case3)
+- Varicella zoster — 3 phenotype variants (Sensitive, Specific, New)
+- Progressive multifocal leukoencephalopathy (PML)
+- Hospitalized infection (broad outcome)
+
+**Exposure cohorts (immunosuppressive drugs):**
+
+- Rituximab
+- JAK inhibitors (JAKi)
+- Mycophenolate mofetil (MMF)
+- Intravenous immunoglobulin (IVIG)
+
+**Indication cohorts (autoimmune conditions):**
+
+- Uveitis
+- Systemic lupus erythematosus (SLE)
+- Systemic sclerosis (SSc)
+- Dermatomyositis (DM)
+
+### Export from WebAPI
+
+```{r}
+#| eval: false
+cohortDefinitionSet <- ROhdsiWebApi::exportCohortDefinitionSet(
+  baseUrl       = baseUrl,
+  cohortIds     = c(
+    1791985, # pneumocystis pneumonia (Total)
+    1792492, # pneumocystis pneumonia (Case1)
+    1792493, # pneumocystis pneumonia (Case2)
+    1792494, # pneumocystis pneumonia (Case3)
+    1791944, # varicella zoster (Sensitive)
+    1791945, # varicella zoster (Specific)
+    1792481, # varicella zoster (New)
+    1792205, # PML
+    1793889, # Hospitalized Infection
+    1794247, # rituximab exposures
+    1794245, # JAKi exposures
+    1794244, # MMF exposures
+    1794243, # IVIG exposures
+    1794239, # Uveitis
+    1794240, # SLE
+    1794241, # SSc
+    1794242  # DM
+  ),
+  generateStats = TRUE
+)
+```
+
+> **What `generateStats = TRUE` does:** This tells ATLAS to include inclusion rule statistics tracking in the generated SQL. When the cohort is later instantiated, it will record how many people pass each inclusion criterion — essential for attrition diagrams.
+
+### Inspect what we got
+
+```{r}
+#| eval: false
+# See the structure
+str(cohortDefinitionSet, max.level = 1)
+
+# What columns do we have?
+names(cohortDefinitionSet)
+
+# Quick look at the cohort names and IDs
+cohortDefinitionSet |>
+  select(cohortId, cohortName) |>
+  print(n = Inf)
+```
+
+The data frame has columns:
+
+- `cohortId`: Numeric ID (matches the ATLAS ID by default)
+- `cohortName`: Name from ATLAS (may be verbose or inconsistent)
+- `json`: The full JSON cohort definition (this is what powers concept set diagnostics)
+- `sql`: The generated SQL for cohort instantiation
+
+---
+
+## 4. Rename & Organize Cohorts
+
+ATLAS cohort names can be verbose, inconsistent, or include author prefixes. Let's apply clean, standardized labels while preserving the original ATLAS IDs for traceability.
+
+```{r}
+#| eval: false
+# Define our preferred labels
+name_map <- list(
+  "1791985" = "pneumocystis pneumonia (Total)",
+  "1792492" = "pneumocystis pneumonia (Case1)",
+  "1792493" = "pneumocystis pneumonia (Case2)",
+  "1792494" = "pneumocystis pneumonia (Case3)",
+  "1791944" = "varicella zoster (Sensitive)",
+  "1791945" = "varicella zoster (Specific)",
+  "1792481" = "varicella zoster (New)",
+  "1792205" = "PML",
+  "1793889" = "Hospitalized Infection",
+  "1794247" = "rituximab exposures",
+  "1794245" = "JAKi exposures",
+  "1794244" = "MMF exposures",
+  "1794243" = "IVIG exposures",
+  "1794239" = "Uveitis",
+  "1794240" = "SLE",
+  "1794241" = "SSc",
+  "1794242" = "DM"
+)
+
+# Preserve the original ATLAS IDs
+cohortDefinitionSet$atlasId <- cohortDefinitionSet$cohortId
+
+# Apply clean names
+for (i in seq_len(nrow(cohortDefinitionSet))) {
+  atlas_id <- as.character(cohortDefinitionSet$atlasId[i])
+  if (atlas_id %in% names(name_map)) {
+    cohortDefinitionSet$cohortName[i] <- name_map[[atlas_id]]
+  }
+}
+```
+
+### Verify the renaming
+
+```{r}
+#| eval: false
+cohortDefinitionSet |>
+  select(cohortId, atlasId, cohortName) |>
+  print(n = Inf)
+```
+
+> **Why keep `atlasId`?** If you need to go back to ATLAS to edit a definition, find a bug, or cross-reference with collaborators, you want the original ID. The `cohortId` might get reassigned later (e.g., to sequential 1, 2, 3...), but `atlasId` always traces back to the source.
+
+---
+
+## 5. Save the Cohort Definition Set
+
+OHDSI projects follow a standard folder layout for cohort definitions. `saveCohortDefinitionSet()` writes everything to disk in this structure:
+
+```
+inst/
+├── Cohorts.csv              # Settings file: ID, name, JSON filename, SQL filename
+├── cohorts/                  # One .json file per cohort
+│   ├── 1791985.json
+│   ├── 1792492.json
+│   └── ...
+└── sql/
+    └── sql_server/           # One .sql file per cohort (in OHDSI SQL dialect)
+        ├── 1791985.sql
+        ├── 1792492.sql
+        └── ...
+```
+
+### Create the folder structure and save
+
+```{r}
+#| eval: false
+# Create the directories (if they don't exist)
+dir.create("inst/cohorts", recursive = TRUE, showWarnings = FALSE)
+dir.create("inst/sql/sql_server", recursive = TRUE, showWarnings = FALSE)
+
+# Save everything
+CohortGenerator::saveCohortDefinitionSet(
+  cohortDefinitionSet = cohortDefinitionSet,
+  settingsFileName    = "inst/Cohorts.csv",
+  jsonFolder          = "inst/cohorts",
+  sqlFolder           = "inst/sql/sql_server"
+)
+```
+
+### Verify what was saved
+
+```{r}
+#| eval: false
+# Check the settings file
+readr::read_csv("inst/Cohorts.csv") |>
+  print(n = Inf)
+
+# Check JSON files
+list.files("inst/cohorts")
+
+# Check SQL files
+list.files("inst/sql/sql_server")
+```
+
+### Loading saved cohorts later
+
+The beauty of this layout: you can reload everything in one call without needing ATLAS access.
+
+```{r}
+#| eval: false
+# In a future session, reload from disk:
+cohortDefinitionSet <- CohortGenerator::getCohortDefinitionSet(
+  settingsFileName = "inst/Cohorts.csv",
+  jsonFolder       = "inst/cohorts",
+  sqlFolder        = "inst/sql/sql_server"
+)
+```
+
+> **Why this matters for reproducibility:** Your study package should be self-contained. By saving the cohort definitions to `inst/`, anyone can clone your repo and regenerate the cohorts without access to your ATLAS instance. The JSON captures the exact clinical logic, and the SQL is ready to execute.
+
+---
+
+## 6. Connect to Eunomia
+
+Now we switch from ATLAS (where cohorts are *defined*) to a database (where cohorts are *generated*). Eunomia gives us a local synthetic CDM to test against.
+
+```{r}
+#| eval: false
+# Get connection details (downloads SQLite database on first run)
+connectionDetails <- getEunomiaConnectionDetails()
+
+# Connect and verify
+connection <- connect(connectionDetails)
+getTableNames(connection, databaseSchema = "main")
+```
+
+### Quick data overview
+
+```{r}
+#| eval: false
+# Population size
+querySql(connection, "SELECT COUNT(*) AS n_persons FROM main.person")
+
+# Check what conditions exist -- our ATLAS cohorts use specific concept IDs
+# that may or may not appear in the synthetic data
+querySql(connection, "
+  SELECT
+    c.concept_id,
+    c.concept_name,
+    COUNT(DISTINCT co.person_id) AS n_patients
+  FROM main.condition_occurrence co
+  JOIN main.concept c ON co.condition_concept_id = c.concept_id
+  GROUP BY c.concept_id, c.concept_name
+  ORDER BY n_patients DESC
+  LIMIT 20
+")
+
+# Check drugs
+querySql(connection, "
+  SELECT
+    c.concept_id,
+    c.concept_name,
+    COUNT(DISTINCT de.person_id) AS n_patients
+  FROM main.drug_exposure de
+  JOIN main.concept c ON de.drug_concept_id = c.concept_id
+  GROUP BY c.concept_id, c.concept_name
+  ORDER BY n_patients DESC
+  LIMIT 20
+")
+```
+
+> **Important expectation:** Eunomia is a small synthetic dataset (~2,700 patients). Many of our study cohorts target rare conditions (PML, pneumocystis pneumonia) and specialized drugs (rituximab, JAK inhibitors) that are unlikely to appear in this data. **Expect many cohorts to have zero members.** This is normal and expected — the point of this exercise is to practice the *workflow*, not to get clinically meaningful results. Real results require running against institutional CDMs with millions of patients.
+
+---
+
+## 7. Generate Cohorts
+
+### Create the cohort tables
+
+```{r}
+#| eval: false
+cohortTableNames <- getCohortTableNames(cohortTable = "study_cohort")
+
+createCohortTables(
+  connectionDetails    = connectionDetails,
+  cohortDatabaseSchema = "main",
+  cohortTableNames     = cohortTableNames
+)
+```
+
+### Generate all cohorts
+
+```{r}
+#| eval: false
+cohortsGenerated <- generateCohortSet(
+  connectionDetails    = connectionDetails,
+  cdmDatabaseSchema    = "main",
+  cohortDatabaseSchema = "main",
+  cohortTableNames     = cohortTableNames,
+  cohortDefinitionSet  = cohortDefinitionSet
+)
+
+cohortsGenerated
+```
+
+> **What's happening:** For each of the 17 cohorts, CohortGenerator renders the SQL template with the target database schema, translates it to the SQLite dialect, and executes it. Inclusion rule statistics are tracked (because we set `generateStats = TRUE` at export).
+
+### Check cohort counts
+
+```{r}
+#| eval: false
+cohortCounts <- getCohortCounts(
+  connectionDetails    = connectionDetails,
+  cohortDatabaseSchema = "main",
+  cohortTable          = "study_cohort"
+)
+
+# Join with cohort names for readability
+cohortCounts |>
+  left_join(
+    cohortDefinitionSet |> select(cohortId, cohortName),
+    by = "cohortId"
+  ) |>
+  select(cohortId, cohortName, cohortEntries, cohortSubjects) |>
+  arrange(desc(cohortSubjects)) |>
+  print(n = Inf)
+```
+
+You'll likely see a mix of populated cohorts (common conditions) and empty ones (rare diseases/specialized drugs). Record which cohorts have members — only those will produce meaningful diagnostics.
+
+### Understanding empty cohorts
+
+```{r}
+#| eval: false
+# For a cohort with 0 members, check if the concepts even exist in Eunomia
+# Example: check for rituximab concepts
+querySql(connection, "
+  SELECT concept_id, concept_name, domain_id
+  FROM main.concept
+  WHERE LOWER(concept_name) LIKE '%rituximab%'
+")
+
+# Check if any PML-related concepts exist
+querySql(connection, "
+  SELECT concept_id, concept_name, domain_id
+  FROM main.concept
+  WHERE LOWER(concept_name) LIKE '%progressive multifocal%'
+")
+```
+
+---
+
+## 8. Run CohortDiagnostics
+
+Even with empty or sparse cohorts, CohortDiagnostics provides valuable information. For cohorts with JSON definitions (which ours have, since we exported from ATLAS), it can run concept set diagnostics regardless of cohort size.
+
+### Configure output
+
+```{r}
+#| eval: false
+outputFolder <- file.path(getwd(), "diagnostics_output")
+dir.create(outputFolder, showWarnings = FALSE, recursive = TRUE)
+```
+
+### Execute diagnostics
+
+```{r}
+#| eval: false
+executeDiagnostics(
+  cohortDefinitionSet  = cohortDefinitionSet,
+  connectionDetails    = connectionDetails,
+  cohortTable          = "study_cohort",
+  cohortDatabaseSchema = "main",
+  cdmDatabaseSchema    = "main",
+  exportFolder         = outputFolder,
+  databaseId           = "Eunomia",
+  databaseName         = "Eunomia Synthetic CDM",
+  databaseDescription  = "Synthetic OMOP CDM (~2700 patients) for development and testing",
+  minCellCount         = 5  # Suppress counts < 5 for privacy
+)
+```
+
+> **Runtime note:** This may take a few minutes even on Eunomia. CohortDiagnostics runs many analyses per cohort: incidence rates, temporal characterization, concept set evaluation, overlap matrices, etc. With 17 cohorts, that's a substantial number of queries.
+
+### Check exported files
+
+```{r}
+#| eval: false
+list.files(outputFolder, pattern = "\\.csv$") |> head(20)
+```
+
+The export folder contains CSV files for each diagnostic component. These are the portable results you could share with collaborators or upload to a shared diagnostics server.
+
+---
+
+## 9. Explore Results with the Shiny App
+
+### Build the results database
+
+CohortDiagnostics merges all exported CSVs into a single SQLite database that the Shiny app reads.
+
+```{r}
+#| eval: false
+resultsSqlitePath <- file.path(outputFolder, "diagnostics_results.sqlite")
+
+createMergedResultsFile(
+  dataFolder   = outputFolder,
+  sqliteDbPath = resultsSqlitePath,
+  overwrite    = TRUE
+)
+```
+
+### Launch the viewer
+
+```{r}
+#| eval: false
+launchDiagnosticsExplorer(
+  sqliteDbPath = resultsSqlitePath
+)
+```
+
+### What to explore in the Shiny app
+
+The viewer has several tabs. Here's what to focus on for this study:
+
+**Cohort Counts tab:**
+
+- Which cohorts have members in Eunomia? Which are empty?
+- For populated cohorts, how many subjects vs entries? (Entries > subjects means some people re-enter)
+
+**Incidence Rate tab:**
+
+- For any populated cohorts, is the incidence rate plausible?
+- Remember: Eunomia rates won't match real-world epidemiology
+
+**Cohort Overlap tab:**
+
+- Do any exposure cohorts (rituximab, JAKi, MMF, IVIG) share patients?
+- Do indication cohorts (SLE, SSc, DM, Uveitis) overlap as expected?
+
+**Concept Set Diagnostics tab (most valuable for this exercise):**
+
+- Even for empty cohorts, this tab shows the concept sets used in each definition
+- **Orphan concepts**: Standard concepts in Eunomia's vocabulary that *could* match but aren't included
+- **Included concepts**: Full expansion of each concept set with descendants
+- This helps you evaluate whether the phenotype captures the right codes *before* running on real data
+
+**Cohort Characterization tab:**
+
+- Baseline conditions and drugs for populated cohorts
+- Compare multiple phenotype variants (e.g., the three pneumocystis phenotypes) to see how their populations differ
+
+---
+
+## 10. Discussion & Exercises
+
+### Discussion: Why multiple phenotype variants?
+
+Notice that several conditions have multiple cohort variants:
+
+- **Pneumocystis pneumonia**: Total, Case1, Case2, Case3
+- **Varicella zoster**: Sensitive, Specific, New
+
+This is a common pattern in pharmacovigilance. Different phenotype algorithms make different tradeoffs between sensitivity (capturing all true cases) and specificity (avoiding false positives). Running diagnostics on all variants helps you:
+
+1. Compare how many patients each captures
+2. Evaluate whether the more specific definitions are too restrictive
+3. Choose the right variant for your study question
+
+### Exercise 1: Inspect a cohort definition JSON
+
+Pick one cohort and examine its JSON definition to understand the clinical logic.
+
+```{r}
+#| eval: false
+# Read the JSON for one cohort
+pcp_json <- jsonlite::fromJSON(
+  readLines("inst/cohorts/1791985.json", warn = FALSE) |> paste(collapse = "\n"),
+  simplifyVector = FALSE
+)
+
+# Look at the top-level structure
+names(pcp_json)
+
+# What are the concept sets?
+pcp_json$ConceptSets |>
+  sapply(function(cs) cs$name) |>
+  unlist()
+
+# What are the inclusion criteria?
+pcp_json$InclusionRules |>
+  sapply(function(rule) rule$name) |>
+  unlist()
+```
+
+### Exercise 2: Compare phenotype variants programmatically
+
+If multiple variants have members, compare them directly.
+
+```{r}
+#| eval: false
+# Get all cohort counts
+all_counts <- getCohortCounts(
+  connectionDetails    = connectionDetails,
+  cohortDatabaseSchema = "main",
+  cohortTable          = "study_cohort"
+)
+
+# Filter to pneumocystis variants
+pcp_ids <- c(1791985, 1792492, 1792493, 1792494)
+
+all_counts |>
+  filter(cohortId %in% pcp_ids) |>
+  left_join(
+    cohortDefinitionSet |> select(cohortId, cohortName),
+    by = "cohortId"
+  ) |>
+  select(cohortName, cohortSubjects, cohortEntries)
+
+# Do the same for varicella zoster variants
+vz_ids <- c(1791944, 1791945, 1792481)
+
+all_counts |>
+  filter(cohortId %in% vz_ids) |>
+  left_join(
+    cohortDefinitionSet |> select(cohortId, cohortName),
+    by = "cohortId"
+  ) |>
+  select(cohortName, cohortSubjects, cohortEntries)
+```
+
+### Exercise 3: Check concept coverage in Eunomia
+
+For a cohort with zero members, investigate whether the concepts exist at all.
+
+```{r}
+#| eval: false
+# Extract the concept IDs from a cohort's JSON
+# Example: read the PML cohort JSON
+pml_json <- jsonlite::fromJSON(
+  readLines("inst/cohorts/1792205.json", warn = FALSE) |> paste(collapse = "\n"),
+  simplifyVector = FALSE
+)
+
+# Pull out concept IDs from all concept sets
+concept_ids <- pml_json$ConceptSets |>
+  lapply(function(cs) {
+    sapply(cs$expression$items, function(item) item$concept$CONCEPT_ID)
+  }) |>
+  unlist() |>
+  unique()
+
+concept_ids
+
+# Check which of these exist in Eunomia's vocabulary
+if (length(concept_ids) > 0) {
+  querySql(connection, sprintf("
+    SELECT concept_id, concept_name, domain_id, standard_concept
+    FROM main.concept
+    WHERE concept_id IN (%s)
+  ", paste(concept_ids, collapse = ", ")))
+}
+
+# Now check if any of those concepts appear in the clinical data
+if (length(concept_ids) > 0) {
+  querySql(connection, sprintf("
+    SELECT
+      c.concept_id,
+      c.concept_name,
+      COUNT(*) AS n_records
+    FROM main.condition_occurrence co
+    JOIN main.concept c ON co.condition_concept_id = c.concept_id
+    WHERE c.concept_id IN (%s)
+    GROUP BY c.concept_id, c.concept_name
+  ", paste(concept_ids, collapse = ", ")))
+}
+```
+
+### Exercise 4: Reassign sequential cohort IDs
+
+In some workflows, you may want cohort IDs to be sequential (1, 2, 3...) rather than the large ATLAS IDs. Try reassigning them while preserving the ATLAS ID mapping.
+
+```{r}
+#| eval: false
+# Create a mapping table
+id_mapping <- cohortDefinitionSet |>
+  select(atlasId, cohortName) |>
+  mutate(newCohortId = row_number())
+
+id_mapping |> print(n = Inf)
+
+# To actually reassign, you'd modify cohortDefinitionSet$cohortId
+# and regenerate. Be careful: this means your cohort table will use
+# the new IDs, so keep the mapping for reference.
+
+# YOUR CODE HERE: modify cohortDefinitionSet$cohortId and regenerate
+```
+
+### Exercise 5: Add a new cohort from ATLAS
+
+Browse the ATLAS demo site (<https://atlas-demo.ohdsi.org>) and find another cohort definition relevant to this study (e.g., a different infection, another immunosuppressive drug, or a new autoimmune condition).
+
+```{r}
+#| eval: false
+# Step 1: Find a cohort ID from ATLAS
+# Browse https://atlas-demo.ohdsi.org -> Cohort Definitions
+# Note the ID from the URL or the list
+
+# Step 2: Export just the new cohort
+# new_cohort <- ROhdsiWebApi::exportCohortDefinitionSet(
+#   baseUrl   = baseUrl,
+#   cohortIds = c(YOUR_ID_HERE),
+#   generateStats = TRUE
+# )
+
+# Step 3: Bind it to the existing set
+# cohortDefinitionSet <- bind_rows(cohortDefinitionSet, new_cohort)
+
+# Step 4: Regenerate and re-run diagnostics
+```
+
+---
+
+## Clean up
+
+```{r}
+#| eval: false
+disconnect(connection)
+```
+
+---
+
+## Summary
+
+In this module we covered the full OHDSI cohort diagnostics workflow:
+
+1. **ROhdsiWebApi** connects R to ATLAS, letting you pull cohort definitions programmatically
+2. **`exportCohortDefinitionSet()`** downloads JSON + SQL for any set of ATLAS cohort IDs
+3. **Renaming and organizing** cohorts ensures clean labels and traceability to ATLAS IDs
+4. **`saveCohortDefinitionSet()`** writes everything to disk in the standard `inst/` layout for reproducibility
+5. **CohortGenerator** instantiates cohorts against any OMOP CDM (Eunomia for testing, real databases for production)
+6. **CohortDiagnostics** evaluates cohort quality across multiple dimensions
+7. **The Shiny viewer** provides interactive exploration of diagnostic results
+
+### Key takeaways
+
+1. **ATLAS is for defining; databases are for generating.** Keep these steps separate and save definitions locally for reproducibility.
+2. **JSON definitions enable full diagnostics.** Concept set diagnostics (orphan concepts, included source codes) only work with JSON, not SQL-only cohorts.
+3. **Empty cohorts on Eunomia are expected.** Rare conditions and specialized drugs won't appear in a 2,700-patient synthetic dataset. The workflow is the same on real data.
+4. **Multiple phenotype variants are a feature, not a bug.** Running diagnostics on sensitive vs. specific variants helps you choose the right one for your study question.
+5. **Save everything to `inst/`.** Your study package should run without ATLAS access. Anyone with the repo can `getCohortDefinitionSet()` and reproduce your cohorts.
+
+### Resources
+
+- ROhdsiWebApi: <https://ohdsi.github.io/ROhdsiWebApi/>
+- CohortGenerator: <https://ohdsi.github.io/CohortGenerator/>
+- CohortDiagnostics: <https://ohdsi.github.io/CohortDiagnostics/>
+- ATLAS demo: <https://atlas-demo.ohdsi.org>
+- The Book of OHDSI — Chapter 12 (Characterization): <https://ohdsi.github.io/TheBookOfOhdsi/>
+- Eunomia: <https://ohdsi.github.io/Eunomia/>
+
+### Next steps
+
+- Run these same cohorts against an institutional CDM with real patient data
+- Use diagnostic results to iterate on phenotype definitions in ATLAS
+- Feed validated cohorts into Strategus for full study execution (CohortMethod, SCCS, etc.)

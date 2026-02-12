@@ -1,0 +1,707 @@
+---
+title: "Module: Cohort Diagnostics with Eunomia"
+subtitle: "Building Cohorts, Running Diagnostics, and Interpreting Results"
+---
+
+```{r}
+#| include: false
+# This module walks through the full workflow of defining cohorts,
+# instantiating them against a local OMOP CDM (Eunomia), and running
+# CohortDiagnostics to evaluate cohort quality.
+```
+
+## Agenda
+
+1. **Environment Setup** (Installation & Connection)
+2. **Cohort Definitions** (JSON Cohort Specs)
+3. **Cohort Generation** (Instantiation Against Eunomia)
+4. **Running CohortDiagnostics** (Full Diagnostic Suite)
+5. **Exploring Results** (Diagnostics Shiny App)
+6. **Interpreting Key Diagnostics** (Guided Exploration)
+7. **Exercises** (Practice)
+
+---
+
+## 1. Environment Setup
+
+We need several OHDSI packages. Eunomia provides the synthetic CDM, DatabaseConnector handles the connection, and CohortDiagnostics runs a comprehensive battery of checks on our cohorts.
+
+### Install packages
+
+```{r}
+#| eval: false
+
+# Core OHDSI packages from CRAN
+install.packages(c("DatabaseConnector", "SqlRender"))
+
+# Eunomia (synthetic OMOP CDM)
+install.packages("Eunomia")
+
+# CohortDiagnostics and its key dependency CohortGenerator
+# These are typically installed from GitHub
+install.packages("remotes")
+remotes::install_github("OHDSI/CohortGenerator")
+remotes::install_github("OHDSI/CohortDiagnostics")
+```
+
+> **Note:** CohortDiagnostics has many dependencies. If you hit compilation errors on Windows, make sure you have [Rtools](https://cran.r-project.org/bin/windows/Rtools/) installed. On macOS, you may need Xcode command-line tools (`xcode-select --install`).
+
+### Load libraries
+
+```{r}
+#| eval: false
+library(DatabaseConnector)
+library(Eunomia)
+library(CohortGenerator)
+library(CohortDiagnostics)
+library(SqlRender)
+```
+
+### Connect to Eunomia
+
+```{r}
+#| eval: false
+# Get connection details (downloads the SQLite database on first run)
+connectionDetails <- getEunomiaConnectionDetails()
+
+# Connect
+connection <- connect(connectionDetails)
+
+# Verify -- list available tables
+getTableNames(connection, databaseSchema = "main")
+```
+
+You should see the standard OMOP CDM tables: `person`, `observation_period`, `condition_occurrence`, `drug_exposure`, `concept`, and more.
+
+### Quick sanity check
+
+```{r}
+#| eval: false
+# How many patients?
+querySql(connection, "SELECT COUNT(*) AS n_persons FROM main.person")
+
+# What's the observation period range?
+querySql(connection, "
+  SELECT
+    MIN(observation_period_start_date) AS earliest,
+    MAX(observation_period_end_date) AS latest
+  FROM main.observation_period
+")
+```
+
+Eunomia has ~2,700 synthetic patients. Keep this small size in mind when interpreting diagnostic results — some metrics will look sparse simply because of the limited population.
+
+---
+
+## 2. Cohort Definitions
+
+Before running diagnostics, we need cohort definitions. In a real study you'd export these from ATLAS as JSON. For this exercise, we'll use cohort definitions that ship with CohortDiagnostics or create simple ones programmatically.
+
+### Understanding cohort definition structure
+
+A cohort definition in OHDSI consists of:
+
+- **A JSON specification**: The full clinical logic (entry events, inclusion criteria, exit strategy)
+- **Generated SQL**: Executable SQL derived from the JSON
+- **A cohort ID**: A numeric identifier
+
+### Option A: Use built-in example cohorts
+
+CohortGenerator provides helper functions to work with cohort definition sets.
+
+```{r}
+#| eval: false
+# We'll create a small set of cohort definitions manually.
+# In practice, you'd export these from ATLAS.
+
+# First, let's see what conditions exist in Eunomia so we pick real concept IDs
+top_conditions <- querySql(connection, "
+  SELECT
+    c.concept_id,
+    c.concept_name,
+    COUNT(DISTINCT co.person_id) AS n_patients
+  FROM main.condition_occurrence co
+  JOIN main.concept c ON co.condition_concept_id = c.concept_id
+  GROUP BY c.concept_id, c.concept_name
+  ORDER BY n_patients DESC
+  LIMIT 20
+")
+
+top_conditions
+```
+
+Note the concept IDs and patient counts. We'll use these to build cohorts that actually have members in Eunomia.
+
+### Option B: Create simple SQL-based cohorts
+
+For learning purposes, we can define cohorts using plain SQL rather than JSON. CohortGenerator supports this approach.
+
+```{r}
+#| eval: false
+# Define output folder for cohort SQL and settings
+cohortFolder <- file.path(getwd(), "cohorts")
+dir.create(cohortFolder, showWarnings = FALSE, recursive = TRUE)
+```
+
+Let's create two cohort SQL files. Each follows the standard cohort format: insert into a cohort table with `cohort_definition_id`, `subject_id`, `cohort_start_date`, and `cohort_end_date`.
+
+**Cohort 1: Viral Sinusitis (first occurrence)**
+
+```{r}
+#| eval: false
+# Concept ID 444429 = Viral sinusitis (common in Eunomia)
+# Adjust the concept_id if needed based on your top_conditions query above
+
+sinusitis_sql <- "
+-- Viral sinusitis cohort: first occurrence with 365 days prior observation
+INSERT INTO @target_cohort_table (
+  cohort_definition_id,
+  subject_id,
+  cohort_start_date,
+  cohort_end_date
+)
+SELECT
+  @target_cohort_id AS cohort_definition_id,
+  first_dx.person_id AS subject_id,
+  first_dx.cohort_start_date,
+  op.observation_period_end_date AS cohort_end_date
+FROM (
+  SELECT
+    co.person_id,
+    MIN(co.condition_start_date) AS cohort_start_date
+  FROM @cdm_database_schema.condition_occurrence co
+  WHERE co.condition_concept_id = 444429
+  GROUP BY co.person_id
+) first_dx
+JOIN @cdm_database_schema.observation_period op
+  ON first_dx.person_id = op.person_id
+  AND first_dx.cohort_start_date >= op.observation_period_start_date
+  AND first_dx.cohort_start_date <= op.observation_period_end_date
+WHERE DATEDIFF(day, op.observation_period_start_date, first_dx.cohort_start_date) >= 365
+;
+"
+
+writeLines(sinusitis_sql, file.path(cohortFolder, "1.sql"))
+```
+
+**Cohort 2: Acute Bronchitis (first occurrence)**
+
+```{r}
+#| eval: false
+# Concept ID for acute bronchitis -- let's find it
+querySql(connection, "
+  SELECT concept_id, concept_name
+  FROM main.concept
+  WHERE concept_name LIKE '%ronchitis%'
+    AND domain_id = 'Condition'
+    AND standard_concept = 'S'
+  LIMIT 10
+")
+```
+
+```{r}
+#| eval: false
+# Replace XXXXX with the concept_id you found above
+bronchitis_concept_id <- 260139  # Acute bronchitis -- verify this exists in your Eunomia
+
+bronchitis_sql <- "
+INSERT INTO @target_cohort_table (
+  cohort_definition_id,
+  subject_id,
+  cohort_start_date,
+  cohort_end_date
+)
+SELECT
+  @target_cohort_id AS cohort_definition_id,
+  first_dx.person_id AS subject_id,
+  first_dx.cohort_start_date,
+  op.observation_period_end_date AS cohort_end_date
+FROM (
+  SELECT
+    co.person_id,
+    MIN(co.condition_start_date) AS cohort_start_date
+  FROM @cdm_database_schema.condition_occurrence co
+  WHERE co.condition_concept_id = 260139
+  GROUP BY co.person_id
+) first_dx
+JOIN @cdm_database_schema.observation_period op
+  ON first_dx.person_id = op.person_id
+  AND first_dx.cohort_start_date >= op.observation_period_start_date
+  AND first_dx.cohort_start_date <= op.observation_period_end_date
+WHERE DATEDIFF(day, op.observation_period_start_date, first_dx.cohort_start_date) >= 365
+;
+"
+
+writeLines(bronchitis_sql, file.path(cohortFolder, "2.sql"))
+```
+
+### Build the cohort definition set
+
+CohortGenerator uses a data frame to track your cohorts.
+
+```{r}
+#| eval: false
+cohortDefinitionSet <- data.frame(
+  cohortId = c(1, 2),
+  cohortName = c("Viral Sinusitis (first occurrence)", "Acute Bronchitis (first occurrence)"),
+  sql = c(
+    readLines(file.path(cohortFolder, "1.sql"), warn = FALSE) |> paste(collapse = "\n"),
+    readLines(file.path(cohortFolder, "2.sql"), warn = FALSE) |> paste(collapse = "\n")
+  ),
+  json = c(NA_character_, NA_character_),  # No JSON for SQL-only cohorts
+  stringsAsFactors = FALSE
+)
+
+cohortDefinitionSet
+```
+
+> **Key concept:** In a real study, you'd use ATLAS to define cohorts visually, then export both the JSON and SQL. The JSON is needed for full CohortDiagnostics functionality (like concept set diagnostics). SQL-only cohorts still work for most diagnostics.
+
+---
+
+## 3. Cohort Generation
+
+Now we instantiate our cohorts — run the SQL against Eunomia to populate a cohort table.
+
+### Create the cohort tables
+
+```{r}
+#| eval: false
+# CohortGenerator creates the required cohort tables
+cohortTableNames <- getCohortTableNames(cohortTable = "my_cohort")
+
+createCohortTables(
+  connectionDetails = connectionDetails,
+  cohortDatabaseSchema = "main",
+  cohortTableNames = cohortTableNames
+)
+```
+
+This creates several tables in the database:
+
+- `my_cohort`: The main cohort membership table
+- `my_cohort_inclusion`: Tracks inclusion rule results
+- `my_cohort_inclusion_result`: Summary of inclusion rule passage
+- `my_cohort_inclusion_stats`: Per-rule statistics
+- `my_cohort_summary_stats`: Overall cohort counts
+- `my_cohort_censor_stats`: Censoring information
+
+### Generate (instantiate) cohorts
+
+```{r}
+#| eval: false
+cohortsGenerated <- generateCohortSet(
+  connectionDetails = connectionDetails,
+  cdmDatabaseSchema = "main",
+  cohortDatabaseSchema = "main",
+  cohortTableNames = cohortTableNames,
+  cohortDefinitionSet = cohortDefinitionSet
+)
+
+cohortsGenerated
+```
+
+### Verify cohort counts
+
+```{r}
+#| eval: false
+# Check what we generated
+getCohortCounts(
+  connectionDetails = connectionDetails,
+  cohortDatabaseSchema = "main",
+  cohortTable = "my_cohort"
+)
+```
+
+You should see a row per cohort with `cohortEntries` and `cohortSubjects`.
+
+```{r}
+#| eval: false
+# Peek at the actual cohort table
+querySql(connection, "
+  SELECT
+    cohort_definition_id,
+    COUNT(*) AS n_entries,
+    COUNT(DISTINCT subject_id) AS n_subjects,
+    MIN(cohort_start_date) AS earliest_start,
+    MAX(cohort_start_date) AS latest_start
+  FROM main.my_cohort
+  GROUP BY cohort_definition_id
+")
+```
+
+### Troubleshooting: Empty cohorts
+
+If a cohort has 0 members, check:
+
+1. **Does the concept_id exist in Eunomia?** Query `condition_occurrence` directly.
+2. **Is the 365-day prior observation too restrictive?** Try reducing it.
+3. **SQL translation issues?** Eunomia uses SQLite. Check that `DATEDIFF` translated correctly.
+
+```{r}
+#| eval: false
+# Debug: Does the concept exist in the data?
+querySql(connection, "
+  SELECT COUNT(*) AS n_records
+  FROM main.condition_occurrence
+  WHERE condition_concept_id = 444429
+")
+```
+
+---
+
+## 4. Running CohortDiagnostics
+
+CohortDiagnostics evaluates your cohorts from many angles: temporal trends, concept set completeness, incidence rates, and more.
+
+### Configure the diagnostics run
+
+```{r}
+#| eval: false
+# Output folder for results
+outputFolder <- file.path(getwd(), "diagnostics_output")
+dir.create(outputFolder, showWarnings = FALSE, recursive = TRUE)
+```
+
+### Execute diagnostics
+
+```{r}
+#| eval: false
+executeDiagnostics(
+  cohortDefinitionSet = cohortDefinitionSet,
+  connectionDetails = connectionDetails,
+  cohortTable = "my_cohort",
+  cohortDatabaseSchema = "main",
+  cdmDatabaseSchema = "main",
+  exportFolder = outputFolder,
+  databaseId = "Eunomia",
+  databaseName = "Eunomia Synthetic CDM",
+  databaseDescription = "Synthetic OMOP CDM for testing",
+  minCellCount = 5  # Suppress small cell counts
+)
+```
+
+> **What happens during execution?** CohortDiagnostics runs a series of analyses including:
+>
+> - **Cohort counts and attrition**: How many people enter and how inclusion criteria filter them
+> - **Incidence rates**: Rate of cohort entry over calendar time
+> - **Time distributions**: Days from observation start to cohort entry, cohort duration
+> - **Cohort overlap**: Patients shared between cohorts
+> - **Concept set diagnostics**: Are the concept sets capturing what we intended? (Requires JSON)
+> - **Characterization**: Baseline characteristics of cohort members (conditions, drugs, demographics)
+> - **Temporal characterization**: How characteristics change relative to cohort entry
+> - **Relationship to visit context**: Where are the index events recorded?
+
+### Check what was produced
+
+```{r}
+#| eval: false
+list.files(outputFolder)
+```
+
+You'll see CSV files for each diagnostic component and a SQLite database file that the Shiny viewer uses.
+
+---
+
+## 5. Exploring Results with the Shiny App
+
+CohortDiagnostics includes a Shiny app for interactive exploration.
+
+### Create the results database
+
+```{r}
+#| eval: false
+# First, create a SQLite database from the exported results
+resultsDatabaseSchema <- file.path(outputFolder, "diagnostics_results.sqlite")
+
+# Create the results data model
+createMergedResultsFile(
+  dataFolder = outputFolder,
+  sqliteDbPath = resultsDatabaseSchema,
+  overwrite = TRUE
+)
+```
+
+### Launch the Shiny viewer
+
+```{r}
+#| eval: false
+launchDiagnosticsExplorer(
+  sqliteDbPath = resultsDatabaseSchema
+)
+```
+
+This opens an interactive web application in your browser with tabs for each diagnostic.
+
+> **Tip:** If the Shiny app doesn't launch, try specifying a port: `launchDiagnosticsExplorer(sqliteDbPath = resultsDatabaseSchema, port = 8888)`
+
+---
+
+## 6. Interpreting Key Diagnostics
+
+Let's walk through what each diagnostic tells you and what to look for.
+
+### 6.1 Cohort Counts & Attrition
+
+**What it shows:** The number of people at each stage of the cohort definition — initial events, then after each inclusion criterion.
+
+**What to look for:**
+
+- **Large drops**: If an inclusion rule removes >80% of people, is it too restrictive?
+- **Zero counts**: A rule that filters everyone out indicates a logic error or data mismatch
+- **Comparison across databases**: The same definition should have qualitatively similar attrition patterns
+
+```{r}
+#| eval: false
+# You can also inspect attrition programmatically
+querySql(connection, "
+  SELECT *
+  FROM main.my_cohort_summary_stats
+")
+```
+
+### 6.2 Incidence Rates
+
+**What it shows:** The rate at which new cohort entries occur over calendar time.
+
+**What to look for:**
+
+- **Unexpected spikes or drops**: Could indicate data quality issues (e.g., a hospital system migration)
+- **Seasonal patterns**: Some conditions should show seasonality (respiratory infections in winter)
+- **Trends over time**: Rising/falling rates might reflect coding changes, not real epidemiology
+- **Plausibility**: Does the incidence rate match published literature for this condition?
+
+### 6.3 Time Distributions
+
+**What it shows:** Distribution of days from observation start to cohort entry, and duration of cohort membership.
+
+**What to look for:**
+
+- **Spike at day 0**: Many people entering the cohort on their first day of observation suggests prevalent (not incident) cases are leaking in
+- **Very short durations**: If your exit strategy produces 1-day cohort entries, your logic may need refinement
+- **Bimodal distributions**: Could indicate two distinct patient populations
+
+### 6.4 Cohort Overlap
+
+**What it shows:** A matrix showing how many patients appear in multiple cohorts.
+
+**What to look for:**
+
+- **Expected overlap**: Some conditions naturally co-occur
+- **Unexpected overlap**: If two cohorts that should be mutually exclusive share patients, check your definitions
+- **For comparator studies**: High overlap between target and comparator cohorts is a concern
+
+### 6.5 Concept Set Diagnostics (requires JSON)
+
+**What it shows:** Evaluates whether your concept sets are complete and well-specified.
+
+This includes:
+
+- **Orphan concepts**: Standard concepts in the data that are NOT in your concept set but probably should be (they're used in the same clinical context)
+- **Included source codes**: Which source codes map to your included concepts
+- **Concept set expression**: The explicit list of concepts and their descendants
+
+**What to look for:**
+
+- **Orphan concepts with high prevalence**: You may be missing important codes
+- **Unexpected source code mappings**: A concept might map to codes you didn't intend
+
+> **Note:** Concept set diagnostics require the JSON cohort definition, not just SQL. For SQL-only cohorts, this tab will be empty.
+
+### 6.6 Characterization
+
+**What it shows:** Prevalence of baseline features (conditions, drugs, demographics) in the 365 days before cohort entry.
+
+**What to look for:**
+
+- **Clinical plausibility**: Do the top conditions and drugs make sense for this patient population?
+- **Unexpected features**: A cohort of diabetes patients with very low diabetes medication prevalence suggests a problem
+- **Comparison across cohorts**: Target and comparator cohorts in a study should differ primarily on the exposure of interest, not systematically on everything
+
+---
+
+## 7. Exercises
+
+### Exercise 1: Build a drug-based cohort
+
+Define a cohort based on first exposure to a drug in Eunomia.
+
+```{r}
+#| eval: false
+# Step 1: Find drugs in Eunomia
+top_drugs <- querySql(connection, "
+  SELECT
+    c.concept_id,
+    c.concept_name,
+    COUNT(DISTINCT de.person_id) AS n_patients
+  FROM main.drug_exposure de
+  JOIN main.concept c ON de.drug_concept_id = c.concept_id
+  GROUP BY c.concept_id, c.concept_name
+  ORDER BY n_patients DESC
+  LIMIT 20
+")
+
+top_drugs
+
+# Step 2: Write SQL for a first-exposure cohort using a drug_concept_id from above
+# Hint: The structure is similar to the condition cohorts, but query drug_exposure
+#       and use drug_concept_id instead of condition_concept_id
+
+# YOUR CODE HERE:
+# drug_sql <- "
+#   INSERT INTO @target_cohort_table ...
+# "
+```
+
+### Exercise 2: Modify inclusion criteria
+
+Take one of the existing cohorts and experiment with the prior observation requirement.
+
+```{r}
+#| eval: false
+# Try different washout periods and see how cohort counts change:
+# - 0 days (no prior observation requirement)
+# - 180 days
+# - 365 days (our current default)
+# - 730 days
+
+# For each, regenerate the cohort and compare counts.
+# What happens to the cohort size? What are the tradeoffs?
+
+# YOUR CODE HERE
+```
+
+### Exercise 3: Investigate overlap
+
+If you have both cohorts generated, query the overlap directly.
+
+```{r}
+#| eval: false
+# Find patients in BOTH cohorts
+querySql(connection, "
+  SELECT COUNT(DISTINCT a.subject_id) AS n_overlap
+  FROM main.my_cohort a
+  JOIN main.my_cohort b
+    ON a.subject_id = b.subject_id
+  WHERE a.cohort_definition_id = 1
+    AND b.cohort_definition_id = 2
+")
+
+# What proportion of each cohort overlaps with the other?
+# YOUR CODE HERE
+```
+
+### Exercise 4: Manual characterization
+
+Before relying on CohortDiagnostics, try characterizing a cohort yourself.
+
+```{r}
+#| eval: false
+# For cohort 1 (sinusitis), find the most common conditions
+# in the 365 days BEFORE cohort entry
+
+querySql(connection, "
+  SELECT
+    c.concept_name AS condition,
+    COUNT(DISTINCT mc.subject_id) AS n_patients,
+    ROUND(
+      100.0 * COUNT(DISTINCT mc.subject_id) /
+      (SELECT COUNT(DISTINCT subject_id) FROM main.my_cohort WHERE cohort_definition_id = 1),
+      1
+    ) AS pct_patients
+  FROM main.my_cohort mc
+  JOIN main.condition_occurrence co
+    ON mc.subject_id = co.person_id
+    AND co.condition_start_date < mc.cohort_start_date
+    AND co.condition_start_date >= DATE(mc.cohort_start_date, '-365 days')
+  JOIN main.concept c ON co.condition_concept_id = c.concept_id
+  WHERE mc.cohort_definition_id = 1
+  GROUP BY c.concept_name
+  ORDER BY n_patients DESC
+  LIMIT 15
+")
+
+# Do the same for drugs. Do the baseline characteristics make clinical sense?
+# YOUR CODE HERE
+```
+
+### Exercise 5: Compare diagnostics across cohorts
+
+Using the Shiny app or programmatic queries, compare your two cohorts on:
+
+1. Cohort size (who is larger and why?)
+2. Age distribution at entry
+3. Top baseline conditions
+4. Gender distribution
+
+```{r}
+#| eval: false
+# Age at cohort entry for each cohort
+querySql(connection, "
+  SELECT
+    mc.cohort_definition_id,
+    AVG(
+      CAST(STRFTIME('%Y', mc.cohort_start_date) AS INT) - p.year_of_birth
+    ) AS mean_age,
+    MIN(
+      CAST(STRFTIME('%Y', mc.cohort_start_date) AS INT) - p.year_of_birth
+    ) AS min_age,
+    MAX(
+      CAST(STRFTIME('%Y', mc.cohort_start_date) AS INT) - p.year_of_birth
+    ) AS max_age
+  FROM main.my_cohort mc
+  JOIN main.person p ON mc.subject_id = p.person_id
+  GROUP BY mc.cohort_definition_id
+")
+```
+
+---
+
+## Clean up
+
+```{r}
+#| eval: false
+disconnect(connection)
+```
+
+---
+
+## Summary
+
+In this module we covered:
+
+- **Eunomia + DatabaseConnector**: Setting up a local synthetic OMOP CDM for development and testing
+- **Cohort definitions**: Writing SQL-based cohort definitions and organizing them for CohortGenerator
+- **Cohort generation**: Instantiating cohorts against a database using CohortGenerator
+- **CohortDiagnostics**: Running the full diagnostic suite and understanding what each analysis provides
+- **Interpretation**: What to look for in attrition, incidence, overlap, concept sets, and characterization
+
+### Key takeaways
+
+1. **Always run diagnostics before analysis.** CohortDiagnostics catches problems that would silently corrupt your study results.
+2. **Concept set completeness matters.** Missing codes means missing patients. Orphan concept analysis helps find gaps.
+3. **Attrition tells a story.** Large drops at specific inclusion rules reveal how restrictive your definition is.
+4. **Incidence rate patterns reveal data quality.** Spikes, drops, and trends often reflect data issues, not real epidemiology.
+5. **Eunomia is your sandbox.** Always test locally before running against production databases.
+
+### Common pitfalls
+
+- **SQL-only cohorts skip concept set diagnostics.** Use ATLAS JSON definitions for full diagnostic coverage.
+- **Small Eunomia population.** Some diagnostics will show sparse or noisy results — this is expected.
+- **minCellCount suppression.** Cells with fewer than 5 patients are censored. In Eunomia, this may hide a lot of data.
+- **SQLite dialect quirks.** Some SQL functions behave differently in SQLite. Always use SqlRender's `translate()` if you're writing raw SQL.
+
+### Resources
+
+- CohortDiagnostics documentation: <https://ohdsi.github.io/CohortDiagnostics/>
+- CohortGenerator documentation: <https://ohdsi.github.io/CohortGenerator/>
+- The Book of OHDSI - Chapter 12 (Characterization): <https://ohdsi.github.io/TheBookOfOhdsi/>
+- ATLAS for visual cohort building: <https://atlas-demo.ohdsi.org>
+- DatabaseConnector: <https://ohdsi.github.io/DatabaseConnector/>
+- Eunomia: <https://ohdsi.github.io/Eunomia/>
+
+### Next steps
+
+- Export cohort definitions from ATLAS as JSON to enable full concept set diagnostics
+- Run CohortDiagnostics against a real CDM database and compare patterns to Eunomia
+- Use diagnostic results to iterate and refine your cohort definitions before study execution
