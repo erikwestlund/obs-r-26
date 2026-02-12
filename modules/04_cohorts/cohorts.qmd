@@ -1,0 +1,473 @@
+---
+title: "Module 04: Cohort Definitions and Diagnostics"
+subtitle: "Exploring OHDSI Cohort Definitions and Building Intuition for Cohort Diagnostics"
+editor_options: 
+  chunk_output_type: console
+---
+
+## Agenda
+
+1. **Exploring Cohort Definitions** — Pull real definitions from CohortDiagnostics, examine JSON and SQL
+2. **Naive Cohort Diagnostics with dplyr** — Build diagnostic visualizations by hand
+3. **Transition to CohortDiagnostics** — Why the package exists
+
+---
+
+## 1. Exploring Cohort Definitions
+
+The CohortDiagnostics package ships with example cohort definitions designed to run on Eunomia. Let's pull them out and look at what's inside.
+
+### Install packages (if needed)
+
+```{r}
+#| eval: false
+install.packages("CohortGenerator")
+install.packages("CohortDiagnostics")
+# or if you're on R 4.5...
+# devtools::install_github("OHDSI/CohortDiagnostics")
+install.packages("jsonlite")
+```
+
+### Load the cohort definition set
+
+The `CohortGenerator::getCohortDefinitionSet()` function reads cohort definitions bundled inside an R package. CohortDiagnostics includes a set of example cohorts with their JSON and SQL.
+
+```{r}
+#| eval: false
+library(CohortDiagnostics)
+
+cohortDefinitionSet <- CohortGenerator::getCohortDefinitionSet(
+  settingsFileName = "Cohorts.csv",
+  jsonFolder = "cohorts",
+  sqlFolder = "sql/sql_server",
+  packageName = "CohortDiagnostics"
+)
+```
+
+### What's in the cohort definition set?
+
+This is just a data frame. Let's see what columns it has and what cohorts are defined.
+
+```{r}
+#| eval: false
+# What columns do we have?
+names(cohortDefinitionSet)
+
+# What cohorts are defined?
+cohortDefinitionSet[, c("cohortId", "cohortName")]
+```
+
+You should see columns including `cohortId`, `cohortName`, `sql`, and `json`. Each row is one cohort definition, and the `json` and `sql` columns contain the full specification and implementation as character strings.
+
+### View the JSON for a cohort
+
+The JSON is the **portable specification** — it describes the cohort logic declaratively. This is what ATLAS exports, what Capr generates, and what Strategus uses to orchestrate studies.
+
+```{r}
+#| eval: false
+library(jsonlite)
+
+# Pick the first cohort
+cohort_name <- cohortDefinitionSet$cohortName[1]
+cohort_json <- cohortDefinitionSet$json[1]
+
+cat("Cohort:", cohort_name, "\n")
+cat("=== JSON (specification) ===\n\n")
+prettify(cohort_json) |> cat()
+```
+
+Look at the structure:
+
+- **ConceptSets**: The clinical concepts this cohort uses (conditions, drugs, etc.)
+- **PrimaryCriteria**: The entry event — what qualifies someone to enter the cohort
+- **AdditionalCriteria** or **InclusionRules**: Extra filters that narrow the population
+- **EndStrategy** or exit criteria: When does someone leave the cohort
+
+This JSON is the same regardless of what database you run it on.
+
+### View the SQL for the same cohort
+
+The SQL is the **executable implementation** — this is what actually queries the database. It's generated from the JSON and is written in OHDSI SQL (SQL Server dialect) that can be translated by SqlRender.
+
+```{r}
+#| eval: false
+cohort_sql <- cohortDefinitionSet$sql[1]
+
+cat("Cohort:", cohort_name, "\n")
+cat("=== SQL (implementation) ===\n\n")
+cat(cohort_sql)
+```
+
+Notice:
+
+- `@` parameters (like `@cdm_database_schema`, `@target_cohort_table`) — these get filled in at runtime
+- The SQL is long and complex — ATLAS/Capr generates this so you don't have to write it by hand
+- It handles edge cases like overlapping periods, observation windows, and inclusion criteria
+
+### Compare: JSON vs SQL
+
+The JSON says *what* the cohort is. The SQL says *how* to find it in a database.
+
+```{r}
+#| eval: false
+# How big is each?
+cat("JSON length:", nchar(cohort_json), "characters\n")
+cat("SQL length: ", nchar(cohort_sql), "characters\n")
+```
+
+The SQL is typically much longer than the JSON. That's the point — the JSON is the concise specification; the SQL handles all the implementation details.
+
+### Look at another cohort
+
+```{r}
+#| eval: false
+# Pick a different cohort
+if (nrow(cohortDefinitionSet) > 1) {
+  cohort_name_2 <- cohortDefinitionSet$cohortName[2]
+  cohort_json_2 <- cohortDefinitionSet$json[2]
+
+  cat("Cohort:", cohort_name_2, "\n")
+  cat("=== JSON (specification) ===\n\n")
+  prettify(cohort_json_2) |> cat()
+}
+```
+
+```{r}
+#| eval: false
+if (nrow(cohortDefinitionSet) > 1) {
+  cohort_sql_2 <- cohortDefinitionSet$sql[2]
+
+  cat("Cohort:", cohort_name_2, "\n")
+  cat("=== SQL (implementation) ===\n\n")
+  cat(cohort_sql_2)
+}
+```
+
+### Key takeaway
+
+Cohort definitions are the **connective tissue** of OHDSI studies. They're created in ATLAS or Capr, stored as JSON for portability, and converted to SQL for execution. Every downstream analysis — characterization, estimation, prediction, diagnostics — starts with these definitions.
+
+---
+
+## 2. Naive Cohort Diagnostics with dplyr
+
+Before we see the CohortDiagnostics package, let's build some cohort diagnostics by hand. This will give you intuition for what the package automates.
+
+We'll work with synthetic multi-site data and progressively build up the kind of analyses that CohortDiagnostics produces.
+
+### Generate synthetic data
+
+This code creates a realistic multi-site dataset with Type 2 Diabetes incidence. Three "databases" (hospitals), each with different baseline characteristics.
+
+```{r}
+#| eval: false
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+set.seed(42)
+
+# Three hospital databases with different baseline risk multipliers
+databases <- tibble(
+  database_id = c("1", "2", "3"),
+  database_label = c("JHMI", "VA", "Optum"),
+  baseline_multiplier = runif(3, 0.8, 1.5)
+)
+
+# Generate a population for one database
+generate_population <- function(database, n = 5000) {
+  birth_years <- 1910:2012
+  num_years <- length(birth_years)
+
+  # Age distribution: more younger people, fewer older
+  birth_probs <- rep(0, num_years)
+  birth_probs[birth_years >= 2000] <- 2
+  birth_probs[birth_years >= 1990 & birth_years < 2000] <- 10
+  birth_probs[birth_years >= 1980 & birth_years < 1990] <- 25
+  birth_probs[birth_years >= 1970 & birth_years < 1980] <- 20
+  birth_probs[birth_years >= 1960 & birth_years < 1970] <- 15
+  birth_probs[birth_years >= 1950 & birth_years < 1960] <- 10
+  birth_probs[birth_years >= 1940 & birth_years < 1950] <- 5
+  birth_probs[birth_years >= 1930 & birth_years < 1940] <- 1
+  birth_probs[birth_years < 1930] <- 0
+  birth_probs <- birth_probs / sum(birth_probs)
+
+  tibble(
+    person_id = seq_len(n),
+    database_id = database$database_id,
+    database_label = database$database_label,
+    sex = sample(c("Male", "Female"), n, replace = TRUE),
+    birth_year = sample(birth_years, n, replace = TRUE, prob = birth_probs)
+  )
+}
+
+# Generate 5,000 individuals per database (15,000 total)
+population <- bind_rows(lapply(1:nrow(databases), function(i) {
+  generate_population(databases[i, ])
+}))
+
+# Age-specific and sex-specific T2DM incidence rates (per 1000 person-years)
+incidence_rates <- tibble(
+  age_bin = c("0-9", "10-19", "20-29", "30-39", "40-49",
+              "50-59", "60-69", "70-79", "80-89", "90-99"),
+  female_rate = c(0, 0, 1, 2, 2.5, 4.5, 4.5, 4.5, 4.5, 4.5),
+  male_rate =   c(0, 0, 2, 3.5, 5.5, 7.5, 7.5, 7.5, 7.5, 7.5)
+)
+
+# Assign T2DM status based on age, sex, and database
+population <- population |>
+  left_join(databases |> select(-database_label), by = "database_id") |>
+  mutate(
+    age = 2022 - birth_year,
+    age_bin = case_when(
+      age < 10 ~ "0-9", age < 20 ~ "10-19", age < 30 ~ "20-29",
+      age < 40 ~ "30-39", age < 50 ~ "40-49", age < 60 ~ "50-59",
+      age < 70 ~ "60-69", age < 80 ~ "70-79", age < 90 ~ "80-89",
+      TRUE ~ "90-99"
+    )
+  ) |>
+  left_join(incidence_rates, by = "age_bin") |>
+  mutate(
+    base_rate = ifelse(sex == "Male", male_rate, female_rate),
+    adjusted_rate = base_rate * baseline_multiplier,
+    has_t2dm = rbinom(n(), 1, adjusted_rate / 1000)
+  ) |>
+  select(person_id, database_id, database_label, birth_year, sex, age_bin, has_t2dm)
+
+# Expand over calendar years 2010-2022 with year-to-year variation
+data <- population |>
+  expand_grid(calendar_year = 2010:2022) |>
+  mutate(
+    yearly_adjustment = rnorm(n(), mean = 1, sd = 0.1),
+    covid_effect = ifelse(calendar_year >= 2020, 0.7, 1),
+    adjusted_rate = has_t2dm * yearly_adjustment * covid_effect,
+    has_t2dm = rbinom(n(), 1, pmin(1, adjusted_rate))
+  ) |>
+  select(person_id, database_id, database_label, birth_year,
+         sex, age_bin, calendar_year, has_t2dm)
+```
+
+### Inspect the data
+
+```{r}
+#| eval: false
+data |> head()
+data |> glimpse()
+```
+
+We have one row per person-year: 15,000 individuals observed across 13 years at 3 sites. The `has_t2dm` column indicates whether a T2DM diagnosis was recorded that year.
+
+### First pass: overall summary
+
+The simplest diagnostic — what's the overall T2DM rate each year?
+
+```{r}
+#| eval: false
+summary <- data |>
+  group_by(calendar_year) |>
+  summarise(
+    n = n(),
+    n_t2dm = sum(has_t2dm),
+    t2dm_rate = n_t2dm / n
+  )
+
+summary
+```
+
+### Convert to incidence rate
+
+Epidemiologists report rates per 1,000 person-years.
+
+```{r}
+#| eval: false
+summary <- summary |>
+  mutate(incidence_1000_py = (n_t2dm / n) * 1000)
+
+summary
+```
+
+### Visualize: incidence over time
+
+```{r}
+#| eval: false
+ggplot(summary, aes(x = calendar_year, y = incidence_1000_py)) +
+  geom_line() +
+  labs(
+    title = "T2DM Incidence Over Time",
+    x = "Year",
+    y = "Incidence Rate (per 1,000 person-years)"
+  )
+```
+
+That gives us a single line. Useful, but we can't see what's driving the trend. Let's stratify.
+
+### Stratify by sex
+
+```{r}
+#| eval: false
+summary_sex <- data |>
+  group_by(calendar_year, sex) |>
+  summarise(
+    n = n(),
+    n_t2dm = sum(has_t2dm),
+    incidence_1000_py = (n_t2dm / n) * 1000,
+    .groups = "drop"
+  )
+
+summary_sex |> head()
+```
+
+```{r}
+#| eval: false
+ggplot(summary_sex, aes(x = calendar_year, y = incidence_1000_py, color = sex)) +
+  geom_line() +
+  labs(
+    title = "T2DM Incidence Over Time by Sex",
+    x = "Year",
+    y = "Incidence Rate (per 1,000 person-years)"
+  )
+```
+
+Now we can see differences between males and females.
+
+### Stratify by age
+
+```{r}
+#| eval: false
+summary_age <- data |>
+  group_by(calendar_year, age_bin) |>
+  summarise(
+    n = n(),
+    n_t2dm = sum(has_t2dm),
+    incidence_1000_py = (n_t2dm / n) * 1000,
+    .groups = "drop"
+  )
+
+ggplot(summary_age, aes(x = calendar_year, y = incidence_1000_py, color = age_bin)) +
+  geom_line() +
+  labs(
+    title = "T2DM Incidence Over Time by Age",
+    x = "Year",
+    y = "Incidence Rate (per 1,000 person-years)"
+  )
+```
+
+Getting crowded. Let's facet.
+
+### Stratify by age and sex
+
+```{r}
+#| eval: false
+summary_age_sex <- data |>
+  group_by(calendar_year, age_bin, sex) |>
+  summarise(
+    n = n(),
+    n_t2dm = sum(has_t2dm),
+    incidence_1000_py = (n_t2dm / n) * 1000,
+    .groups = "drop"
+  )
+
+ggplot(summary_age_sex, aes(x = calendar_year, y = incidence_1000_py, color = sex)) +
+  geom_line() +
+  facet_wrap(~age_bin, nrow = 1) +
+  labs(
+    title = "T2DM Incidence by Age and Sex",
+    x = "Year",
+    y = "Incidence Rate (per 1,000 person-years)"
+  ) +
+  scale_x_continuous(breaks = seq(2010, 2022, 5))
+```
+
+Now we can see: incidence increases with age, males have higher rates, and there's a visible dip around 2020.
+
+### Stratify by database (site)
+
+This is the multi-site comparison. In a real OHDSI network study, this would be across hospitals running the same cohort definition.
+
+```{r}
+#| eval: false
+summary_site <- data |>
+  group_by(calendar_year, age_bin, sex, database_label) |>
+  summarise(
+    n = n(),
+    n_t2dm = sum(has_t2dm),
+    incidence_1000_py = (n_t2dm / n) * 1000,
+    .groups = "drop"
+  )
+
+ggplot(summary_site, aes(x = calendar_year, y = incidence_1000_py, color = sex)) +
+  geom_line() +
+  facet_grid(database_label ~ age_bin) +
+  labs(
+    title = "T2DM Incidence by Age, Sex, and Database",
+    x = "Year",
+    y = "Incidence Rate (per 1,000 person-years)",
+    color = "Sex"
+  ) +
+  scale_x_continuous(breaks = seq(2010, 2022, 5))
+```
+
+Each row is a different database, each column an age group. Same cohort definition, different data sources.
+
+### What we just built
+
+Think about what we did:
+
+1. **Overall incidence** over time
+2. **Stratified by sex** — are there demographic differences?
+3. **Stratified by age** — does incidence vary with age?
+4. **Stratified by age and sex** — interaction effects?
+5. **Stratified by database** — is this cohort consistent across data sources?
+
+This is exactly the kind of diagnostic thinking that goes into evaluating a cohort definition before using it in a study.
+
+---
+
+## 3. From dplyr to CohortDiagnostics
+
+### The manual approach doesn't scale
+
+What we just did was about 50 lines of dplyr for **one condition** on **synthetic flat-file data**.
+
+In a real study, you'd need to:
+
+- Work with OMOP CDM tables (joins across `condition_occurrence`, `concept`, `person`, `observation_period`)
+- Handle standard and source concepts, vocabulary hierarchies
+- Compute incidence with proper time-at-risk calculations
+- Run across multiple cohort definitions simultaneously
+- Produce publication-ready, standardized output
+- De-identify results for sharing across sites
+
+That's a lot of manual dplyr.
+
+### CohortDiagnostics automates this
+
+The CohortDiagnostics package takes cohort definitions (the JSON + SQL we examined earlier) and produces all of these diagnostic views — and more — automatically on any OMOP CDM database.
+
+It generates:
+
+- **Incidence rates** stratified by age, sex, and calendar year
+- **Cohort counts** and attrition through inclusion criteria
+- **Index event breakdown** — what concepts triggered cohort entry
+- **Concept set diagnostics** — orphan codes, included source codes
+- **Temporal characterization** — what happens before, during, and after cohort entry
+- **Overlap** between cohort definitions
+- **Visit context** — where do cohort entries happen (inpatient, outpatient, ER)
+
+All packaged into a Shiny app for interactive exploration.
+
+### The connection
+
+The dplyr exercise you just ran is the **manual version** of what CohortDiagnostics does at scale, on normalized OMOP CDM data, with vocabulary awareness, across any database platform.
+
+Your colleague will now walk you through CohortDiagnostics and show you the real thing. Questions?
+
+---
+
+## Resources
+
+- CohortDiagnostics: <https://ohdsi.github.io/CohortDiagnostics/>
+- CohortGenerator: <https://ohdsi.github.io/CohortGenerator/>
+- Capr (R cohort builder): <https://ohdsi.github.io/Capr/>
+- ATLAS demo: <https://atlas-demo.ohdsi.org>
+- The Book of OHDSI, Chapter 12 (Cohorts): <https://ohdsi.github.io/TheBookOfOhdsi/>

@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "WebSearch",
-      "Bash(quarto render:*)"
+      "Bash(quarto render:*)",
+      "WebFetch(domain:ohdsi.github.io)",
+      "Bash(wc:*)"
     ]
   }
 }
