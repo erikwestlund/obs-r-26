@@ -32,7 +32,7 @@ We need several OHDSI packages. Eunomia provides the synthetic CDM, DatabaseConn
 #| eval: false
 
 # Core OHDSI packages from CRAN
-install.packages(c("DatabaseConnector", "SqlRender"))
+install.packages(c("DatabaseConnector", "SqlRender", "dplyr"))
 
 # Eunomia (synthetic OMOP CDM)
 install.packages("Eunomia")
@@ -40,6 +40,7 @@ install.packages("Eunomia")
 # CohortDiagnostics and its key dependency CohortGenerator
 # These are typically installed from GitHub
 install.packages("remotes")
+remotes::install_github("OHDSI/ROhdsiWebApi")
 remotes::install_github("OHDSI/CohortGenerator")
 remotes::install_github("OHDSI/CohortDiagnostics")
 ```
@@ -55,6 +56,9 @@ library(Eunomia)
 library(CohortGenerator)
 library(CohortDiagnostics)
 library(SqlRender)
+library(dplyr)
+library(ROhdsiWebApi)
+
 ```
 
 ### Connect to Eunomia
@@ -149,7 +153,7 @@ Let's create two cohort SQL files. Each follows the standard cohort format: inse
 
 ```{r}
 #| eval: false
-# Concept ID 444429 = Viral sinusitis (common in Eunomia)
+# Concept ID 40481087 = Viral sinusitis (common in Eunomia)
 # Adjust the concept_id if needed based on your top_conditions query above
 
 sinusitis_sql <- "
@@ -170,7 +174,7 @@ FROM (
     co.person_id,
     MIN(co.condition_start_date) AS cohort_start_date
   FROM @cdm_database_schema.condition_occurrence co
-  WHERE co.condition_concept_id = 444429
+  WHERE co.condition_concept_id = 40481087
   GROUP BY co.person_id
 ) first_dx
 JOIN @cdm_database_schema.observation_period op
@@ -241,7 +245,7 @@ CohortGenerator uses a data frame to track your cohorts.
 
 ```{r}
 #| eval: false
-cohortDefinitionSet <- data.frame(
+cohortDefinitionSetManual <- data.frame(
   cohortId = c(1, 2),
   cohortName = c("Viral Sinusitis (first occurrence)", "Acute Bronchitis (first occurrence)"),
   sql = c(
@@ -256,6 +260,67 @@ cohortDefinitionSet
 ```
 
 > **Key concept:** In a real study, you'd use ATLAS to define cohorts visually, then export both the JSON and SQL. The JSON is needed for full CohortDiagnostics functionality (like concept set diagnostics). SQL-only cohorts still work for most diagnostics.
+
+
+## Export cohorts from Atlas 
+
+Now use WebApi to connect to an ATLAS instance (Demo Atlas in this case) and export the cohort definition set (including the json files).
+
+
+### Connect to ATLAS WebAPI
+
+ATLAS exposes a REST API called **WebAPI** that lets you programmatically access cohort definitions, concept sets, and other artifacts. The public demo instance doesn't require authentication.
+
+```{r}
+#| eval: false
+baseUrl <- "https://atlas-demo.ohdsi.org/WebAPI"
+```
+
+If your institution's ATLAS has security enabled, you'd authenticate first:
+
+```{r}
+#| eval: false
+# Uncomment and configure for secured instances:
+# ROhdsiWebApi::authorizeWebApi(
+#   baseUrl = baseUrl,
+#   authMethod = "windows"  # or "db", "ad", etc.
+# )
+```
+
+### Verify the connection
+
+```{r}
+#| eval: false
+# List available data sources on this WebAPI
+ROhdsiWebApi::getWebApiVersion(baseUrl = baseUrl)
+```
+
+If this returns a version string, you're connected.
+
+### Export cohort definitions straight to a Cohort DefinitionSet object
+
+```{r}
+
+cohortDefinitionSet <- ROhdsiWebApi::exportCohortDefinitionSet(
+  baseUrl       = baseUrl,
+  cohortIds     = c(
+    1796298, # Viral Sinusitis 
+    1796299  # Acute Bronchitis
+  ),
+  generateStats = TRUE
+)
+
+# See the structure
+str(cohortDefinitionSet, max.level = 1)
+
+# What columns do we have?
+names(cohortDefinitionSet)
+
+# Quick look at the cohort names and IDs
+cohortDefinitionSet |>
+  select(cohortId, cohortName) |>
+  print(n = Inf)
+```
 
 ---
 
@@ -330,24 +395,6 @@ querySql(connection, "
 ")
 ```
 
-### Troubleshooting: Empty cohorts
-
-If a cohort has 0 members, check:
-
-1. **Does the concept_id exist in Eunomia?** Query `condition_occurrence` directly.
-2. **Is the 365-day prior observation too restrictive?** Try reducing it.
-3. **SQL translation issues?** Eunomia uses SQLite. Check that `DATEDIFF` translated correctly.
-
-```{r}
-#| eval: false
-# Debug: Does the concept exist in the data?
-querySql(connection, "
-  SELECT COUNT(*) AS n_records
-  FROM main.condition_occurrence
-  WHERE condition_concept_id = 444429
-")
-```
-
 ---
 
 ## 4. Running CohortDiagnostics
@@ -379,6 +426,8 @@ executeDiagnostics(
   databaseDescription = "Synthetic OMOP CDM for testing",
   minCellCount = 5  # Suppress small cell counts
 )
+
+
 ```
 
 > **What happens during execution?** CohortDiagnostics runs a series of analyses including:
