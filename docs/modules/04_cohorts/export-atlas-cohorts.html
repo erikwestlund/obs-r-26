@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>Observational Research Methods in R</title>
+<title>Module: ATLAS Cohorts → CohortDiagnostics on Eunomia</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -18,6 +18,41 @@ ul.task-list{list-style: none;}
 ul.task-list li input[type="checkbox"] {
 width: 0.8em;
 margin: 0 0.8em 0.2em -1em;  vertical-align: middle;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+}
+pre.numberSource { margin-left: 3em; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
 </style>
 
@@ -2172,15 +2207,71 @@ vertical-align: -.125em;
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#course-overview" id="toc-course-overview" class="nav-link active" data-scroll-target="#course-overview">Course Overview</a></li>
-  <li><a href="#sessions" id="toc-sessions" class="nav-link" data-scroll-target="#sessions">Sessions</a>
+  <li><a href="#agenda" id="toc-agenda" class="nav-link active" data-scroll-target="#agenda">Agenda</a></li>
+  <li><a href="#package-installation" id="toc-package-installation" class="nav-link" data-scroll-target="#package-installation">1. Package Installation</a>
   <ul class="collapse">
-  <li><a href="#session-1-the-r-workflow" id="toc-session-1-the-r-workflow" class="nav-link" data-scroll-target="#session-1-the-r-workflow">Session 1: The R Workflow</a></li>
-  <li><a href="#session-2-data-workflow" id="toc-session-2-data-workflow" class="nav-link" data-scroll-target="#session-2-data-workflow">Session 2: Data Workflow</a></li>
-  <li><a href="#session-3-ohdsi-basics-provisional" id="toc-session-3-ohdsi-basics-provisional" class="nav-link" data-scroll-target="#session-3-ohdsi-basics-provisional">Session 3: OHDSI Basics (Provisional)</a></li>
+  <li><a href="#load-libraries" id="toc-load-libraries" class="nav-link" data-scroll-target="#load-libraries">Load libraries</a></li>
   </ul></li>
-  <li><a href="#other-topics" id="toc-other-topics" class="nav-link" data-scroll-target="#other-topics">Other Topics</a></li>
+  <li><a href="#connect-to-atlas-webapi" id="toc-connect-to-atlas-webapi" class="nav-link" data-scroll-target="#connect-to-atlas-webapi">2. Connect to ATLAS WebAPI</a>
+  <ul class="collapse">
+  <li><a href="#verify-the-connection" id="toc-verify-the-connection" class="nav-link" data-scroll-target="#verify-the-connection">Verify the connection</a></li>
+  <li><a href="#browse-available-cohorts-optional" id="toc-browse-available-cohorts-optional" class="nav-link" data-scroll-target="#browse-available-cohorts-optional">Browse available cohorts (optional)</a></li>
+  </ul></li>
+  <li><a href="#export-cohort-definitions-from-atlas" id="toc-export-cohort-definitions-from-atlas" class="nav-link" data-scroll-target="#export-cohort-definitions-from-atlas">3. Export Cohort Definitions from ATLAS</a>
+  <ul class="collapse">
+  <li><a href="#our-study-cohorts" id="toc-our-study-cohorts" class="nav-link" data-scroll-target="#our-study-cohorts">Our study cohorts</a></li>
+  <li><a href="#export-from-webapi" id="toc-export-from-webapi" class="nav-link" data-scroll-target="#export-from-webapi">Export from WebAPI</a></li>
+  <li><a href="#inspect-what-we-got" id="toc-inspect-what-we-got" class="nav-link" data-scroll-target="#inspect-what-we-got">Inspect what we got</a></li>
+  </ul></li>
+  <li><a href="#rename-organize-cohorts" id="toc-rename-organize-cohorts" class="nav-link" data-scroll-target="#rename-organize-cohorts">4. Rename &amp; Organize Cohorts</a>
+  <ul class="collapse">
+  <li><a href="#verify-the-renaming" id="toc-verify-the-renaming" class="nav-link" data-scroll-target="#verify-the-renaming">Verify the renaming</a></li>
+  </ul></li>
+  <li><a href="#save-the-cohort-definition-set" id="toc-save-the-cohort-definition-set" class="nav-link" data-scroll-target="#save-the-cohort-definition-set">5. Save the Cohort Definition Set</a>
+  <ul class="collapse">
+  <li><a href="#create-the-folder-structure-and-save" id="toc-create-the-folder-structure-and-save" class="nav-link" data-scroll-target="#create-the-folder-structure-and-save">Create the folder structure and save</a></li>
+  <li><a href="#verify-what-was-saved" id="toc-verify-what-was-saved" class="nav-link" data-scroll-target="#verify-what-was-saved">Verify what was saved</a></li>
+  <li><a href="#loading-saved-cohorts-later" id="toc-loading-saved-cohorts-later" class="nav-link" data-scroll-target="#loading-saved-cohorts-later">Loading saved cohorts later</a></li>
+  </ul></li>
+  <li><a href="#connect-to-eunomia" id="toc-connect-to-eunomia" class="nav-link" data-scroll-target="#connect-to-eunomia">6. Connect to Eunomia</a>
+  <ul class="collapse">
+  <li><a href="#quick-data-overview" id="toc-quick-data-overview" class="nav-link" data-scroll-target="#quick-data-overview">Quick data overview</a></li>
+  </ul></li>
+  <li><a href="#generate-cohorts" id="toc-generate-cohorts" class="nav-link" data-scroll-target="#generate-cohorts">7. Generate Cohorts</a>
+  <ul class="collapse">
+  <li><a href="#create-the-cohort-tables" id="toc-create-the-cohort-tables" class="nav-link" data-scroll-target="#create-the-cohort-tables">Create the cohort tables</a></li>
+  <li><a href="#generate-all-cohorts" id="toc-generate-all-cohorts" class="nav-link" data-scroll-target="#generate-all-cohorts">Generate all cohorts</a></li>
+  <li><a href="#check-cohort-counts" id="toc-check-cohort-counts" class="nav-link" data-scroll-target="#check-cohort-counts">Check cohort counts</a></li>
+  <li><a href="#understanding-empty-cohorts" id="toc-understanding-empty-cohorts" class="nav-link" data-scroll-target="#understanding-empty-cohorts">Understanding empty cohorts</a></li>
+  </ul></li>
+  <li><a href="#run-cohortdiagnostics" id="toc-run-cohortdiagnostics" class="nav-link" data-scroll-target="#run-cohortdiagnostics">8. Run CohortDiagnostics</a>
+  <ul class="collapse">
+  <li><a href="#configure-output" id="toc-configure-output" class="nav-link" data-scroll-target="#configure-output">Configure output</a></li>
+  <li><a href="#execute-diagnostics" id="toc-execute-diagnostics" class="nav-link" data-scroll-target="#execute-diagnostics">Execute diagnostics</a></li>
+  <li><a href="#check-exported-files" id="toc-check-exported-files" class="nav-link" data-scroll-target="#check-exported-files">Check exported files</a></li>
+  </ul></li>
+  <li><a href="#explore-results-with-the-shiny-app" id="toc-explore-results-with-the-shiny-app" class="nav-link" data-scroll-target="#explore-results-with-the-shiny-app">9. Explore Results with the Shiny App</a>
+  <ul class="collapse">
+  <li><a href="#build-the-results-database" id="toc-build-the-results-database" class="nav-link" data-scroll-target="#build-the-results-database">Build the results database</a></li>
+  <li><a href="#launch-the-viewer" id="toc-launch-the-viewer" class="nav-link" data-scroll-target="#launch-the-viewer">Launch the viewer</a></li>
+  <li><a href="#what-to-explore-in-the-shiny-app" id="toc-what-to-explore-in-the-shiny-app" class="nav-link" data-scroll-target="#what-to-explore-in-the-shiny-app">What to explore in the Shiny app</a></li>
+  </ul></li>
+  <li><a href="#discussion-exercises" id="toc-discussion-exercises" class="nav-link" data-scroll-target="#discussion-exercises">10. Discussion &amp; Exercises</a>
+  <ul class="collapse">
+  <li><a href="#discussion-why-multiple-phenotype-variants" id="toc-discussion-why-multiple-phenotype-variants" class="nav-link" data-scroll-target="#discussion-why-multiple-phenotype-variants">Discussion: Why multiple phenotype variants?</a></li>
+  <li><a href="#exercise-1-inspect-a-cohort-definition-json" id="toc-exercise-1-inspect-a-cohort-definition-json" class="nav-link" data-scroll-target="#exercise-1-inspect-a-cohort-definition-json">Exercise 1: Inspect a cohort definition JSON</a></li>
+  <li><a href="#exercise-2-compare-phenotype-variants-programmatically" id="toc-exercise-2-compare-phenotype-variants-programmatically" class="nav-link" data-scroll-target="#exercise-2-compare-phenotype-variants-programmatically">Exercise 2: Compare phenotype variants programmatically</a></li>
+  <li><a href="#exercise-3-check-concept-coverage-in-eunomia" id="toc-exercise-3-check-concept-coverage-in-eunomia" class="nav-link" data-scroll-target="#exercise-3-check-concept-coverage-in-eunomia">Exercise 3: Check concept coverage in Eunomia</a></li>
+  <li><a href="#exercise-4-reassign-sequential-cohort-ids" id="toc-exercise-4-reassign-sequential-cohort-ids" class="nav-link" data-scroll-target="#exercise-4-reassign-sequential-cohort-ids">Exercise 4: Reassign sequential cohort IDs</a></li>
+  <li><a href="#exercise-5-add-a-new-cohort-from-atlas" id="toc-exercise-5-add-a-new-cohort-from-atlas" class="nav-link" data-scroll-target="#exercise-5-add-a-new-cohort-from-atlas">Exercise 5: Add a new cohort from ATLAS</a></li>
+  </ul></li>
+  <li><a href="#clean-up" id="toc-clean-up" class="nav-link" data-scroll-target="#clean-up">Clean up</a></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a>
+  <ul class="collapse">
+  <li><a href="#key-takeaways" id="toc-key-takeaways" class="nav-link" data-scroll-target="#key-takeaways">Key takeaways</a></li>
   <li><a href="#resources" id="toc-resources" class="nav-link" data-scroll-target="#resources">Resources</a></li>
+  <li><a href="#next-steps" id="toc-next-steps" class="nav-link" data-scroll-target="#next-steps">Next steps</a></li>
+  </ul></li>
   </ul>
 </nav>
 </div>
@@ -2188,8 +2279,8 @@ vertical-align: -.125em;
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Observational Research Methods in R</h1>
-<p class="subtitle lead">Working with the OHDSI/HADES Ecosystem</p>
+<h1 class="title">Module: ATLAS Cohorts → CohortDiagnostics on Eunomia</h1>
+<p class="subtitle lead">Exporting Cohort Definitions from WebAPI, Saving Locally, and Running Diagnostics</p>
 </div>
 
 
@@ -2206,55 +2297,712 @@ vertical-align: -.125em;
 </header>
 
 
-<section id="course-overview" class="level2">
-<h2 class="anchored" data-anchor-id="course-overview">Course Overview</h2>
-<p>This course covers observational research methods using R with the OHDSI/HADES ecosystem.</p>
+<section id="agenda" class="level2">
+<h2 class="anchored" data-anchor-id="agenda">Agenda</h2>
+<ol type="1">
+<li><strong>Package Installation</strong> (One-time setup)</li>
+<li><strong>Connect to ATLAS WebAPI</strong> (Accessing cohort definitions remotely)</li>
+<li><strong>Export Cohort Definitions</strong> (Pulling JSON + SQL from ATLAS)</li>
+<li><strong>Rename &amp; Organize</strong> (Clean labels, standard folder layout)</li>
+<li><strong>Save Cohort Definition Set</strong> (Persistent local storage)</li>
+<li><strong>Connect to Eunomia</strong> (Local synthetic CDM)</li>
+<li><strong>Generate Cohorts</strong> (Instantiate against Eunomia)</li>
+<li><strong>Run CohortDiagnostics</strong> (Full diagnostic suite)</li>
+<li><strong>Explore Results</strong> (Shiny viewer)</li>
+<li><strong>Discussion &amp; Exercises</strong></li>
+</ol>
+<hr>
 </section>
-<section id="sessions" class="level2">
-<h2 class="anchored" data-anchor-id="sessions">Sessions</h2>
-<section id="session-1-the-r-workflow" class="level3">
-<h3 class="anchored" data-anchor-id="session-1-the-r-workflow">Session 1: The R Workflow</h3>
-<p>Environment, dependencies, and data foundations.</p>
+<section id="package-installation" class="level2">
+<h2 class="anchored" data-anchor-id="package-installation">1. Package Installation</h2>
+<p>We need the standard OHDSI stack plus <code>ROhdsiWebApi</code> for communicating with ATLAS.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># CRAN packages</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="fu">c</span>(<span class="st">&quot;DatabaseConnector&quot;</span>, <span class="st">&quot;SqlRender&quot;</span>, <span class="st">&quot;dplyr&quot;</span>))</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Eunomia (synthetic OMOP CDM)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;Eunomia&quot;</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># OHDSI GitHub packages</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">install.packages</span>(<span class="st">&quot;remotes&quot;</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;OHDSI/ROhdsiWebApi&quot;</span>)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;OHDSI/CohortGenerator&quot;</span>)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>remotes<span class="sc">::</span><span class="fu">install_github</span>(<span class="st">&quot;OHDSI/CohortDiagnostics&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<blockquote class="blockquote">
+<p><strong>Troubleshooting:</strong> If you hit compilation errors on Windows, ensure <a href="https://cran.r-project.org/bin/windows/Rtools/">Rtools</a> is installed and on your PATH. On macOS, run <code>xcode-select --install</code> for command-line tools.</p>
+</blockquote>
+<section id="load-libraries" class="level3">
+<h3 class="anchored" data-anchor-id="load-libraries">Load libraries</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(DatabaseConnector)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(Eunomia)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ROhdsiWebApi)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(CohortGenerator)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(CohortDiagnostics)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<hr>
+</section>
+</section>
+<section id="connect-to-atlas-webapi" class="level2">
+<h2 class="anchored" data-anchor-id="connect-to-atlas-webapi">2. Connect to ATLAS WebAPI</h2>
+<p>ATLAS exposes a REST API called <strong>WebAPI</strong> that lets you programmatically access cohort definitions, concept sets, and other artifacts. The public demo instance doesn’t require authentication.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>baseUrl <span class="ot">&lt;-</span> <span class="st">&quot;https://atlas-demo.ohdsi.org/WebAPI&quot;</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>If your institution’s ATLAS has security enabled, you’d authenticate first:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Uncomment and configure for secured instances:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># ROhdsiWebApi::authorizeWebApi(</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co">#   baseUrl = baseUrl,</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">#   authMethod = &quot;windows&quot;  # or &quot;db&quot;, &quot;ad&quot;, etc.</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># )</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="verify-the-connection" class="level3">
+<h3 class="anchored" data-anchor-id="verify-the-connection">Verify the connection</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># List available data sources on this WebAPI</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>ROhdsiWebApi<span class="sc">::</span><span class="fu">getWebApiVersion</span>(<span class="at">baseUrl =</span> baseUrl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>If this returns a version string, you’re connected.</p>
+</section>
+<section id="browse-available-cohorts-optional" class="level3">
+<h3 class="anchored" data-anchor-id="browse-available-cohorts-optional">Browse available cohorts (optional)</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># See all cohort definitions on the demo server</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>allCohorts <span class="ot">&lt;-</span> ROhdsiWebApi<span class="sc">::</span><span class="fu">getCohortDefinitionsMetaData</span>(<span class="at">baseUrl =</span> baseUrl)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># That&#39;s a lot of cohorts. Let&#39;s look at the structure:</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>allCohorts <span class="sc">|&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, name) <span class="sc">|&gt;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">20</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<blockquote class="blockquote">
+<p><strong>Note:</strong> The demo ATLAS has thousands of community-created cohorts. We’ll pull a specific set of 17 cohorts for a pharmacovigilance study.</p>
+</blockquote>
+<hr>
+</section>
+</section>
+<section id="export-cohort-definitions-from-atlas" class="level2">
+<h2 class="anchored" data-anchor-id="export-cohort-definitions-from-atlas">3. Export Cohort Definitions from ATLAS</h2>
+<p>This is the key step: <code>exportCohortDefinitionSet()</code> pulls each cohort’s JSON logic and generated SQL from WebAPI and assembles them into a <code>cohortDefinitionSet</code> data frame — the standard object that CohortGenerator and CohortDiagnostics expect.</p>
+<section id="our-study-cohorts" class="level3">
+<h3 class="anchored" data-anchor-id="our-study-cohorts">Our study cohorts</h3>
+<p>We’re working with cohorts from a pharmacovigilance study that examines opportunistic infections and autoimmune conditions in the context of immunosuppressive therapies:</p>
+<p><strong>Outcome cohorts (infections):</strong></p>
 <ul>
-<li><a href="slides/01_r-workflow/slides.html">Slides</a></li>
-<li><a href="modules/01_r-workflow/r-foundations.html">Module: R Foundations</a></li>
+<li>Pneumocystis pneumonia — 4 phenotype variants (Total, Case1, Case2, Case3)</li>
+<li>Varicella zoster — 3 phenotype variants (Sensitive, Specific, New)</li>
+<li>Progressive multifocal leukoencephalopathy (PML)</li>
+<li>Hospitalized infection (broad outcome)</li>
+</ul>
+<p><strong>Exposure cohorts (immunosuppressive drugs):</strong></p>
+<ul>
+<li>Rituximab</li>
+<li>JAK inhibitors (JAKi)</li>
+<li>Mycophenolate mofetil (MMF)</li>
+<li>Intravenous immunoglobulin (IVIG)</li>
+</ul>
+<p><strong>Indication cohorts (autoimmune conditions):</strong></p>
+<ul>
+<li>Uveitis</li>
+<li>Systemic lupus erythematosus (SLE)</li>
+<li>Systemic sclerosis (SSc)</li>
+<li>Dermatomyositis (DM)</li>
 </ul>
 </section>
-<section id="session-2-data-workflow" class="level3">
-<h3 class="anchored" data-anchor-id="session-2-data-workflow">Session 2: Data Workflow</h3>
-<p>Tools, types, and data management with DatabaseConnector.</p>
+<section id="export-from-webapi" class="level3">
+<h3 class="anchored" data-anchor-id="export-from-webapi">Export from WebAPI</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>cohortDefinitionSet <span class="ot">&lt;-</span> ROhdsiWebApi<span class="sc">::</span><span class="fu">exportCohortDefinitionSet</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">baseUrl       =</span> baseUrl,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortIds     =</span> <span class="fu">c</span>(</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1791985</span>, <span class="co"># pneumocystis pneumonia (Total)</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1792492</span>, <span class="co"># pneumocystis pneumonia (Case1)</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1792493</span>, <span class="co"># pneumocystis pneumonia (Case2)</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1792494</span>, <span class="co"># pneumocystis pneumonia (Case3)</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1791944</span>, <span class="co"># varicella zoster (Sensitive)</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1791945</span>, <span class="co"># varicella zoster (Specific)</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1792481</span>, <span class="co"># varicella zoster (New)</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1792205</span>, <span class="co"># PML</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1793889</span>, <span class="co"># Hospitalized Infection</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1794247</span>, <span class="co"># rituximab exposures</span></span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1794245</span>, <span class="co"># JAKi exposures</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1794244</span>, <span class="co"># MMF exposures</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1794243</span>, <span class="co"># IVIG exposures</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1794239</span>, <span class="co"># Uveitis</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1794240</span>, <span class="co"># SLE</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1794241</span>, <span class="co"># SSc</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>    <span class="dv">1794242</span>  <span class="co"># DM</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">generateStats =</span> <span class="cn">TRUE</span></span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<blockquote class="blockquote">
+<p><strong>What <code>generateStats = TRUE</code> does:</strong> This tells ATLAS to include inclusion rule statistics tracking in the generated SQL. When the cohort is later instantiated, it will record how many people pass each inclusion criterion — essential for attrition diagrams.</p>
+</blockquote>
+</section>
+<section id="inspect-what-we-got" class="level3">
+<h3 class="anchored" data-anchor-id="inspect-what-we-got">Inspect what we got</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># See the structure</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(cohortDefinitionSet, <span class="at">max.level =</span> <span class="dv">1</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="co"># What columns do we have?</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(cohortDefinitionSet)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Quick look at the cohort names and IDs</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>cohortDefinitionSet <span class="sc">|&gt;</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cohortId, cohortName) <span class="sc">|&gt;</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The data frame has columns:</p>
 <ul>
-<li><a href="slides/02_data-workflow/slides.html">Slides</a></li>
-<li><a href="modules/02_data-workflow/data-workflow.html">Module: Data Workflow</a></li>
+<li><code>cohortId</code>: Numeric ID (matches the ATLAS ID by default)</li>
+<li><code>cohortName</code>: Name from ATLAS (may be verbose or inconsistent)</li>
+<li><code>json</code>: The full JSON cohort definition (this is what powers concept set diagnostics)</li>
+<li><code>sql</code>: The generated SQL for cohort instantiation</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="rename-organize-cohorts" class="level2">
+<h2 class="anchored" data-anchor-id="rename-organize-cohorts">4. Rename &amp; Organize Cohorts</h2>
+<p>ATLAS cohort names can be verbose, inconsistent, or include author prefixes. Let’s apply clean, standardized labels while preserving the original ATLAS IDs for traceability.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Define our preferred labels</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>name_map <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1791985&quot;</span> <span class="ot">=</span> <span class="st">&quot;pneumocystis pneumonia (Total)&quot;</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1792492&quot;</span> <span class="ot">=</span> <span class="st">&quot;pneumocystis pneumonia (Case1)&quot;</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1792493&quot;</span> <span class="ot">=</span> <span class="st">&quot;pneumocystis pneumonia (Case2)&quot;</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1792494&quot;</span> <span class="ot">=</span> <span class="st">&quot;pneumocystis pneumonia (Case3)&quot;</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1791944&quot;</span> <span class="ot">=</span> <span class="st">&quot;varicella zoster (Sensitive)&quot;</span>,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1791945&quot;</span> <span class="ot">=</span> <span class="st">&quot;varicella zoster (Specific)&quot;</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1792481&quot;</span> <span class="ot">=</span> <span class="st">&quot;varicella zoster (New)&quot;</span>,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1792205&quot;</span> <span class="ot">=</span> <span class="st">&quot;PML&quot;</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1793889&quot;</span> <span class="ot">=</span> <span class="st">&quot;Hospitalized Infection&quot;</span>,</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1794247&quot;</span> <span class="ot">=</span> <span class="st">&quot;rituximab exposures&quot;</span>,</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1794245&quot;</span> <span class="ot">=</span> <span class="st">&quot;JAKi exposures&quot;</span>,</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1794244&quot;</span> <span class="ot">=</span> <span class="st">&quot;MMF exposures&quot;</span>,</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1794243&quot;</span> <span class="ot">=</span> <span class="st">&quot;IVIG exposures&quot;</span>,</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1794239&quot;</span> <span class="ot">=</span> <span class="st">&quot;Uveitis&quot;</span>,</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1794240&quot;</span> <span class="ot">=</span> <span class="st">&quot;SLE&quot;</span>,</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1794241&quot;</span> <span class="ot">=</span> <span class="st">&quot;SSc&quot;</span>,</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;1794242&quot;</span> <span class="ot">=</span> <span class="st">&quot;DM&quot;</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Preserve the original ATLAS IDs</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>cohortDefinitionSet<span class="sc">$</span>atlasId <span class="ot">&lt;-</span> cohortDefinitionSet<span class="sc">$</span>cohortId</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply clean names</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(<span class="fu">nrow</span>(cohortDefinitionSet))) {</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>  atlas_id <span class="ot">&lt;-</span> <span class="fu">as.character</span>(cohortDefinitionSet<span class="sc">$</span>atlasId[i])</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (atlas_id <span class="sc">%in%</span> <span class="fu">names</span>(name_map)) {</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    cohortDefinitionSet<span class="sc">$</span>cohortName[i] <span class="ot">&lt;-</span> name_map[[atlas_id]]</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="verify-the-renaming" class="level3">
+<h3 class="anchored" data-anchor-id="verify-the-renaming">Verify the renaming</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>cohortDefinitionSet <span class="sc">|&gt;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cohortId, atlasId, cohortName) <span class="sc">|&gt;</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<blockquote class="blockquote">
+<p><strong>Why keep <code>atlasId</code>?</strong> If you need to go back to ATLAS to edit a definition, find a bug, or cross-reference with collaborators, you want the original ID. The <code>cohortId</code> might get reassigned later (e.g., to sequential 1, 2, 3…), but <code>atlasId</code> always traces back to the source.</p>
+</blockquote>
+<hr>
+</section>
+</section>
+<section id="save-the-cohort-definition-set" class="level2">
+<h2 class="anchored" data-anchor-id="save-the-cohort-definition-set">5. Save the Cohort Definition Set</h2>
+<p>OHDSI projects follow a standard folder layout for cohort definitions. <code>saveCohortDefinitionSet()</code> writes everything to disk in this structure:</p>
+<pre><code>inst/
+├── Cohorts.csv              # Settings file: ID, name, JSON filename, SQL filename
+├── cohorts/                  # One .json file per cohort
+│   ├── 1791985.json
+│   ├── 1792492.json
+│   └── ...
+└── sql/
+    └── sql_server/           # One .sql file per cohort (in OHDSI SQL dialect)
+        ├── 1791985.sql
+        ├── 1792492.sql
+        └── ...</code></pre>
+<section id="create-the-folder-structure-and-save" class="level3">
+<h3 class="anchored" data-anchor-id="create-the-folder-structure-and-save">Create the folder structure and save</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create the directories (if they don&#39;t exist)</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="st">&quot;inst/cohorts&quot;</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="st">&quot;inst/sql/sql_server&quot;</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Save everything</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>CohortGenerator<span class="sc">::</span><span class="fu">saveCohortDefinitionSet</span>(</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortDefinitionSet =</span> cohortDefinitionSet,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">settingsFileName    =</span> <span class="st">&quot;inst/Cohorts.csv&quot;</span>,</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">jsonFolder          =</span> <span class="st">&quot;inst/cohorts&quot;</span>,</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">sqlFolder           =</span> <span class="st">&quot;inst/sql/sql_server&quot;</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="verify-what-was-saved" class="level3">
+<h3 class="anchored" data-anchor-id="verify-what-was-saved">Verify what was saved</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check the settings file</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="st">&quot;inst/Cohorts.csv&quot;</span>) <span class="sc">|&gt;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Check JSON files</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="fu">list.files</span>(<span class="st">&quot;inst/cohorts&quot;</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Check SQL files</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a><span class="fu">list.files</span>(<span class="st">&quot;inst/sql/sql_server&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="loading-saved-cohorts-later" class="level3">
+<h3 class="anchored" data-anchor-id="loading-saved-cohorts-later">Loading saved cohorts later</h3>
+<p>The beauty of this layout: you can reload everything in one call without needing ATLAS access.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># In a future session, reload from disk:</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>cohortDefinitionSet <span class="ot">&lt;-</span> CohortGenerator<span class="sc">::</span><span class="fu">getCohortDefinitionSet</span>(</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">settingsFileName =</span> <span class="st">&quot;inst/Cohorts.csv&quot;</span>,</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">jsonFolder       =</span> <span class="st">&quot;inst/cohorts&quot;</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">sqlFolder        =</span> <span class="st">&quot;inst/sql/sql_server&quot;</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<blockquote class="blockquote">
+<p><strong>Why this matters for reproducibility:</strong> Your study package should be self-contained. By saving the cohort definitions to <code>inst/</code>, anyone can clone your repo and regenerate the cohorts without access to your ATLAS instance. The JSON captures the exact clinical logic, and the SQL is ready to execute.</p>
+</blockquote>
+<hr>
+</section>
+</section>
+<section id="connect-to-eunomia" class="level2">
+<h2 class="anchored" data-anchor-id="connect-to-eunomia">6. Connect to Eunomia</h2>
+<p>Now we switch from ATLAS (where cohorts are <em>defined</em>) to a database (where cohorts are <em>generated</em>). Eunomia gives us a local synthetic CDM to test against.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get connection details (downloads SQLite database on first run)</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>connectionDetails <span class="ot">&lt;-</span> <span class="fu">getEunomiaConnectionDetails</span>()</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Connect and verify</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>connection <span class="ot">&lt;-</span> <span class="fu">connect</span>(connectionDetails)</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="fu">getTableNames</span>(connection, <span class="at">databaseSchema =</span> <span class="st">&quot;main&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<section id="quick-data-overview" class="level3">
+<h3 class="anchored" data-anchor-id="quick-data-overview">Quick data overview</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Population size</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">querySql</span>(connection, <span class="st">&quot;SELECT COUNT(*) AS n_persons FROM main.person&quot;</span>)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Check what conditions exist -- our ATLAS cohorts use specific concept IDs</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># that may or may not appear in the synthetic data</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="fu">querySql</span>(connection, <span class="st">&quot;</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="st">    c.concept_id,</span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="st">    c.concept_name,</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="st">    COUNT(DISTINCT co.person_id) AS n_patients</span></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.condition_occurrence co</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a><span class="st">  JOIN main.concept c ON co.condition_concept_id = c.concept_id</span></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a><span class="st">  GROUP BY c.concept_id, c.concept_name</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a><span class="st">  ORDER BY n_patients DESC</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a><span class="st">  LIMIT 20</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>)</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Check drugs</span></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a><span class="fu">querySql</span>(connection, <span class="st">&quot;</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a><span class="st">    c.concept_id,</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a><span class="st">    c.concept_name,</span></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a><span class="st">    COUNT(DISTINCT de.person_id) AS n_patients</span></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.drug_exposure de</span></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a><span class="st">  JOIN main.concept c ON de.drug_concept_id = c.concept_id</span></span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a><span class="st">  GROUP BY c.concept_id, c.concept_name</span></span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a><span class="st">  ORDER BY n_patients DESC</span></span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a><span class="st">  LIMIT 20</span></span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<blockquote class="blockquote">
+<p><strong>Important expectation:</strong> Eunomia is a small synthetic dataset (~2,700 patients). Many of our study cohorts target rare conditions (PML, pneumocystis pneumonia) and specialized drugs (rituximab, JAK inhibitors) that are unlikely to appear in this data. <strong>Expect many cohorts to have zero members.</strong> This is normal and expected — the point of this exercise is to practice the <em>workflow</em>, not to get clinically meaningful results. Real results require running against institutional CDMs with millions of patients.</p>
+</blockquote>
+<hr>
+</section>
+</section>
+<section id="generate-cohorts" class="level2">
+<h2 class="anchored" data-anchor-id="generate-cohorts">7. Generate Cohorts</h2>
+<section id="create-the-cohort-tables" class="level3">
+<h3 class="anchored" data-anchor-id="create-the-cohort-tables">Create the cohort tables</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>cohortTableNames <span class="ot">&lt;-</span> <span class="fu">getCohortTableNames</span>(<span class="at">cohortTable =</span> <span class="st">&quot;study_cohort&quot;</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="fu">createCohortTables</span>(</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">connectionDetails    =</span> connectionDetails,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortDatabaseSchema =</span> <span class="st">&quot;main&quot;</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortTableNames     =</span> cohortTableNames</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="generate-all-cohorts" class="level3">
+<h3 class="anchored" data-anchor-id="generate-all-cohorts">Generate all cohorts</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>cohortsGenerated <span class="ot">&lt;-</span> <span class="fu">generateCohortSet</span>(</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">connectionDetails    =</span> connectionDetails,</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">cdmDatabaseSchema    =</span> <span class="st">&quot;main&quot;</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortDatabaseSchema =</span> <span class="st">&quot;main&quot;</span>,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortTableNames     =</span> cohortTableNames,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortDefinitionSet  =</span> cohortDefinitionSet</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>cohortsGenerated</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<blockquote class="blockquote">
+<p><strong>What’s happening:</strong> For each of the 17 cohorts, CohortGenerator renders the SQL template with the target database schema, translates it to the SQLite dialect, and executes it. Inclusion rule statistics are tracked (because we set <code>generateStats = TRUE</code> at export).</p>
+</blockquote>
+</section>
+<section id="check-cohort-counts" class="level3">
+<h3 class="anchored" data-anchor-id="check-cohort-counts">Check cohort counts</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>cohortCounts <span class="ot">&lt;-</span> <span class="fu">getCohortCounts</span>(</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">connectionDetails    =</span> connectionDetails,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortDatabaseSchema =</span> <span class="st">&quot;main&quot;</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortTable          =</span> <span class="st">&quot;study_cohort&quot;</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Join with cohort names for readability</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>cohortCounts <span class="sc">|&gt;</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    cohortDefinitionSet <span class="sc">|&gt;</span> <span class="fu">select</span>(cohortId, cohortName),</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">&quot;cohortId&quot;</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cohortId, cohortName, cohortEntries, cohortSubjects) <span class="sc">|&gt;</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(cohortSubjects)) <span class="sc">|&gt;</span></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>You’ll likely see a mix of populated cohorts (common conditions) and empty ones (rare diseases/specialized drugs). Record which cohorts have members — only those will produce meaningful diagnostics.</p>
+</section>
+<section id="understanding-empty-cohorts" class="level3">
+<h3 class="anchored" data-anchor-id="understanding-empty-cohorts">Understanding empty cohorts</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># For a cohort with 0 members, check if the concepts even exist in Eunomia</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Example: check for rituximab concepts</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="fu">querySql</span>(connection, <span class="st">&quot;</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT concept_id, concept_name, domain_id</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.concept</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="st">  WHERE LOWER(concept_name) LIKE &#39;%rituximab%&#39;</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Check if any PML-related concepts exist</span></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="fu">querySql</span>(connection, <span class="st">&quot;</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a><span class="st">  SELECT concept_id, concept_name, domain_id</span></span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a><span class="st">  FROM main.concept</span></span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a><span class="st">  WHERE LOWER(concept_name) LIKE &#39;%progressive multifocal%&#39;</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<hr>
+</section>
+</section>
+<section id="run-cohortdiagnostics" class="level2">
+<h2 class="anchored" data-anchor-id="run-cohortdiagnostics">8. Run CohortDiagnostics</h2>
+<p>Even with empty or sparse cohorts, CohortDiagnostics provides valuable information. For cohorts with JSON definitions (which ours have, since we exported from ATLAS), it can run concept set diagnostics regardless of cohort size.</p>
+<section id="configure-output" class="level3">
+<h3 class="anchored" data-anchor-id="configure-output">Configure output</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>outputFolder <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="fu">getwd</span>(), <span class="st">&quot;diagnostics_output&quot;</span>)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(outputFolder, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="execute-diagnostics" class="level3">
+<h3 class="anchored" data-anchor-id="execute-diagnostics">Execute diagnostics</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">executeDiagnostics</span>(</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortDefinitionSet  =</span> cohortDefinitionSet,</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">connectionDetails    =</span> connectionDetails,</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortTable          =</span> <span class="st">&quot;study_cohort&quot;</span>,</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortDatabaseSchema =</span> <span class="st">&quot;main&quot;</span>,</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">cdmDatabaseSchema    =</span> <span class="st">&quot;main&quot;</span>,</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">exportFolder         =</span> outputFolder,</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">databaseId           =</span> <span class="st">&quot;Eunomia&quot;</span>,</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">databaseName         =</span> <span class="st">&quot;Eunomia Synthetic CDM&quot;</span>,</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">databaseDescription  =</span> <span class="st">&quot;Synthetic OMOP CDM (~2700 patients) for development and testing&quot;</span>,</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">minCellCount         =</span> <span class="dv">5</span>  <span class="co"># Suppress counts &lt; 5 for privacy</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<blockquote class="blockquote">
+<p><strong>Runtime note:</strong> This may take a few minutes even on Eunomia. CohortDiagnostics runs many analyses per cohort: incidence rates, temporal characterization, concept set evaluation, overlap matrices, etc. With 17 cohorts, that’s a substantial number of queries.</p>
+</blockquote>
+</section>
+<section id="check-exported-files" class="level3">
+<h3 class="anchored" data-anchor-id="check-exported-files">Check exported files</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">list.files</span>(outputFolder, <span class="at">pattern =</span> <span class="st">&quot;</span><span class="sc">\\</span><span class="st">.csv$&quot;</span>) <span class="sc">|&gt;</span> <span class="fu">head</span>(<span class="dv">20</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>The export folder contains CSV files for each diagnostic component. These are the portable results you could share with collaborators or upload to a shared diagnostics server.</p>
+<hr>
+</section>
+</section>
+<section id="explore-results-with-the-shiny-app" class="level2">
+<h2 class="anchored" data-anchor-id="explore-results-with-the-shiny-app">9. Explore Results with the Shiny App</h2>
+<section id="build-the-results-database" class="level3">
+<h3 class="anchored" data-anchor-id="build-the-results-database">Build the results database</h3>
+<p>CohortDiagnostics merges all exported CSVs into a single SQLite database that the Shiny app reads.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>resultsSqlitePath <span class="ot">&lt;-</span> <span class="fu">file.path</span>(outputFolder, <span class="st">&quot;diagnostics_results.sqlite&quot;</span>)</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="fu">createMergedResultsFile</span>(</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">dataFolder   =</span> outputFolder,</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">sqliteDbPath =</span> resultsSqlitePath,</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">overwrite    =</span> <span class="cn">TRUE</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="launch-the-viewer" class="level3">
+<h3 class="anchored" data-anchor-id="launch-the-viewer">Launch the viewer</h3>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">launchDiagnosticsExplorer</span>(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">sqliteDbPath =</span> resultsSqlitePath</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="what-to-explore-in-the-shiny-app" class="level3">
+<h3 class="anchored" data-anchor-id="what-to-explore-in-the-shiny-app">What to explore in the Shiny app</h3>
+<p>The viewer has several tabs. Here’s what to focus on for this study:</p>
+<p><strong>Cohort Counts tab:</strong></p>
+<ul>
+<li>Which cohorts have members in Eunomia? Which are empty?</li>
+<li>For populated cohorts, how many subjects vs entries? (Entries &gt; subjects means some people re-enter)</li>
+</ul>
+<p><strong>Incidence Rate tab:</strong></p>
+<ul>
+<li>For any populated cohorts, is the incidence rate plausible?</li>
+<li>Remember: Eunomia rates won’t match real-world epidemiology</li>
+</ul>
+<p><strong>Cohort Overlap tab:</strong></p>
+<ul>
+<li>Do any exposure cohorts (rituximab, JAKi, MMF, IVIG) share patients?</li>
+<li>Do indication cohorts (SLE, SSc, DM, Uveitis) overlap as expected?</li>
+</ul>
+<p><strong>Concept Set Diagnostics tab (most valuable for this exercise):</strong></p>
+<ul>
+<li>Even for empty cohorts, this tab shows the concept sets used in each definition</li>
+<li><strong>Orphan concepts</strong>: Standard concepts in Eunomia’s vocabulary that <em>could</em> match but aren’t included</li>
+<li><strong>Included concepts</strong>: Full expansion of each concept set with descendants</li>
+<li>This helps you evaluate whether the phenotype captures the right codes <em>before</em> running on real data</li>
+</ul>
+<p><strong>Cohort Characterization tab:</strong></p>
+<ul>
+<li>Baseline conditions and drugs for populated cohorts</li>
+<li>Compare multiple phenotype variants (e.g., the three pneumocystis phenotypes) to see how their populations differ</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="discussion-exercises" class="level2">
+<h2 class="anchored" data-anchor-id="discussion-exercises">10. Discussion &amp; Exercises</h2>
+<section id="discussion-why-multiple-phenotype-variants" class="level3">
+<h3 class="anchored" data-anchor-id="discussion-why-multiple-phenotype-variants">Discussion: Why multiple phenotype variants?</h3>
+<p>Notice that several conditions have multiple cohort variants:</p>
+<ul>
+<li><strong>Pneumocystis pneumonia</strong>: Total, Case1, Case2, Case3</li>
+<li><strong>Varicella zoster</strong>: Sensitive, Specific, New</li>
+</ul>
+<p>This is a common pattern in pharmacovigilance. Different phenotype algorithms make different tradeoffs between sensitivity (capturing all true cases) and specificity (avoiding false positives). Running diagnostics on all variants helps you:</p>
+<ol type="1">
+<li>Compare how many patients each captures</li>
+<li>Evaluate whether the more specific definitions are too restrictive</li>
+<li>Choose the right variant for your study question</li>
+</ol>
+</section>
+<section id="exercise-1-inspect-a-cohort-definition-json" class="level3">
+<h3 class="anchored" data-anchor-id="exercise-1-inspect-a-cohort-definition-json">Exercise 1: Inspect a cohort definition JSON</h3>
+<p>Pick one cohort and examine its JSON definition to understand the clinical logic.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read the JSON for one cohort</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>pcp_json <span class="ot">&lt;-</span> jsonlite<span class="sc">::</span><span class="fu">fromJSON</span>(</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">readLines</span>(<span class="st">&quot;inst/cohorts/1791985.json&quot;</span>, <span class="at">warn =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span> <span class="fu">paste</span>(<span class="at">collapse =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>),</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">simplifyVector =</span> <span class="cn">FALSE</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Look at the top-level structure</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(pcp_json)</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a><span class="co"># What are the concept sets?</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>pcp_json<span class="sc">$</span>ConceptSets <span class="sc">|&gt;</span></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sapply</span>(<span class="cf">function</span>(cs) cs<span class="sc">$</span>name) <span class="sc">|&gt;</span></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unlist</span>()</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a><span class="co"># What are the inclusion criteria?</span></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>pcp_json<span class="sc">$</span>InclusionRules <span class="sc">|&gt;</span></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sapply</span>(<span class="cf">function</span>(rule) rule<span class="sc">$</span>name) <span class="sc">|&gt;</span></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unlist</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="exercise-2-compare-phenotype-variants-programmatically" class="level3">
+<h3 class="anchored" data-anchor-id="exercise-2-compare-phenotype-variants-programmatically">Exercise 2: Compare phenotype variants programmatically</h3>
+<p>If multiple variants have members, compare them directly.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get all cohort counts</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>all_counts <span class="ot">&lt;-</span> <span class="fu">getCohortCounts</span>(</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">connectionDetails    =</span> connectionDetails,</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortDatabaseSchema =</span> <span class="st">&quot;main&quot;</span>,</span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">cohortTable          =</span> <span class="st">&quot;study_cohort&quot;</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter to pneumocystis variants</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>pcp_ids <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1791985</span>, <span class="dv">1792492</span>, <span class="dv">1792493</span>, <span class="dv">1792494</span>)</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>all_counts <span class="sc">|&gt;</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(cohortId <span class="sc">%in%</span> pcp_ids) <span class="sc">|&gt;</span></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>    cohortDefinitionSet <span class="sc">|&gt;</span> <span class="fu">select</span>(cohortId, cohortName),</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">&quot;cohortId&quot;</span></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cohortName, cohortSubjects, cohortEntries)</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Do the same for varicella zoster variants</span></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>vz_ids <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">1791944</span>, <span class="dv">1791945</span>, <span class="dv">1792481</span>)</span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>all_counts <span class="sc">|&gt;</span></span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(cohortId <span class="sc">%in%</span> vz_ids) <span class="sc">|&gt;</span></span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>    cohortDefinitionSet <span class="sc">|&gt;</span> <span class="fu">select</span>(cohortId, cohortName),</span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">&quot;cohortId&quot;</span></span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(cohortName, cohortSubjects, cohortEntries)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="exercise-3-check-concept-coverage-in-eunomia" class="level3">
+<h3 class="anchored" data-anchor-id="exercise-3-check-concept-coverage-in-eunomia">Exercise 3: Check concept coverage in Eunomia</h3>
+<p>For a cohort with zero members, investigate whether the concepts exist at all.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract the concept IDs from a cohort&#39;s JSON</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Example: read the PML cohort JSON</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>pml_json <span class="ot">&lt;-</span> jsonlite<span class="sc">::</span><span class="fu">fromJSON</span>(</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">readLines</span>(<span class="st">&quot;inst/cohorts/1792205.json&quot;</span>, <span class="at">warn =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span> <span class="fu">paste</span>(<span class="at">collapse =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span>),</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">simplifyVector =</span> <span class="cn">FALSE</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Pull out concept IDs from all concept sets</span></span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>concept_ids <span class="ot">&lt;-</span> pml_json<span class="sc">$</span>ConceptSets <span class="sc">|&gt;</span></span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">lapply</span>(<span class="cf">function</span>(cs) {</span>
+<span id="cb28-11"><a href="#cb28-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sapply</span>(cs<span class="sc">$</span>expression<span class="sc">$</span>items, <span class="cf">function</span>(item) item<span class="sc">$</span>concept<span class="sc">$</span>CONCEPT_ID)</span>
+<span id="cb28-12"><a href="#cb28-12" aria-hidden="true" tabindex="-1"></a>  }) <span class="sc">|&gt;</span></span>
+<span id="cb28-13"><a href="#cb28-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unlist</span>() <span class="sc">|&gt;</span></span>
+<span id="cb28-14"><a href="#cb28-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unique</span>()</span>
+<span id="cb28-15"><a href="#cb28-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-16"><a href="#cb28-16" aria-hidden="true" tabindex="-1"></a>concept_ids</span>
+<span id="cb28-17"><a href="#cb28-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-18"><a href="#cb28-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Check which of these exist in Eunomia&#39;s vocabulary</span></span>
+<span id="cb28-19"><a href="#cb28-19" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(concept_ids) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb28-20"><a href="#cb28-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">querySql</span>(connection, <span class="fu">sprintf</span>(<span class="st">&quot;</span></span>
+<span id="cb28-21"><a href="#cb28-21" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT concept_id, concept_name, domain_id, standard_concept</span></span>
+<span id="cb28-22"><a href="#cb28-22" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM main.concept</span></span>
+<span id="cb28-23"><a href="#cb28-23" aria-hidden="true" tabindex="-1"></a><span class="st">    WHERE concept_id IN (%s)</span></span>
+<span id="cb28-24"><a href="#cb28-24" aria-hidden="true" tabindex="-1"></a><span class="st">  &quot;</span>, <span class="fu">paste</span>(concept_ids, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>)))</span>
+<span id="cb28-25"><a href="#cb28-25" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb28-26"><a href="#cb28-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-27"><a href="#cb28-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Now check if any of those concepts appear in the clinical data</span></span>
+<span id="cb28-28"><a href="#cb28-28" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">length</span>(concept_ids) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb28-29"><a href="#cb28-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">querySql</span>(connection, <span class="fu">sprintf</span>(<span class="st">&quot;</span></span>
+<span id="cb28-30"><a href="#cb28-30" aria-hidden="true" tabindex="-1"></a><span class="st">    SELECT</span></span>
+<span id="cb28-31"><a href="#cb28-31" aria-hidden="true" tabindex="-1"></a><span class="st">      c.concept_id,</span></span>
+<span id="cb28-32"><a href="#cb28-32" aria-hidden="true" tabindex="-1"></a><span class="st">      c.concept_name,</span></span>
+<span id="cb28-33"><a href="#cb28-33" aria-hidden="true" tabindex="-1"></a><span class="st">      COUNT(*) AS n_records</span></span>
+<span id="cb28-34"><a href="#cb28-34" aria-hidden="true" tabindex="-1"></a><span class="st">    FROM main.condition_occurrence co</span></span>
+<span id="cb28-35"><a href="#cb28-35" aria-hidden="true" tabindex="-1"></a><span class="st">    JOIN main.concept c ON co.condition_concept_id = c.concept_id</span></span>
+<span id="cb28-36"><a href="#cb28-36" aria-hidden="true" tabindex="-1"></a><span class="st">    WHERE c.concept_id IN (%s)</span></span>
+<span id="cb28-37"><a href="#cb28-37" aria-hidden="true" tabindex="-1"></a><span class="st">    GROUP BY c.concept_id, c.concept_name</span></span>
+<span id="cb28-38"><a href="#cb28-38" aria-hidden="true" tabindex="-1"></a><span class="st">  &quot;</span>, <span class="fu">paste</span>(concept_ids, <span class="at">collapse =</span> <span class="st">&quot;, &quot;</span>)))</span>
+<span id="cb28-39"><a href="#cb28-39" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="exercise-4-reassign-sequential-cohort-ids" class="level3">
+<h3 class="anchored" data-anchor-id="exercise-4-reassign-sequential-cohort-ids">Exercise 4: Reassign sequential cohort IDs</h3>
+<p>In some workflows, you may want cohort IDs to be sequential (1, 2, 3…) rather than the large ATLAS IDs. Try reassigning them while preserving the ATLAS ID mapping.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a mapping table</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>id_mapping <span class="ot">&lt;-</span> cohortDefinitionSet <span class="sc">|&gt;</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(atlasId, cohortName) <span class="sc">|&gt;</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">newCohortId =</span> <span class="fu">row_number</span>())</span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>id_mapping <span class="sc">|&gt;</span> <span class="fu">print</span>(<span class="at">n =</span> <span class="cn">Inf</span>)</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a><span class="co"># To actually reassign, you&#39;d modify cohortDefinitionSet$cohortId</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a><span class="co"># and regenerate. Be careful: this means your cohort table will use</span></span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a><span class="co"># the new IDs, so keep the mapping for reference.</span></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a><span class="co"># YOUR CODE HERE: modify cohortDefinitionSet$cohortId and regenerate</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="exercise-5-add-a-new-cohort-from-atlas" class="level3">
+<h3 class="anchored" data-anchor-id="exercise-5-add-a-new-cohort-from-atlas">Exercise 5: Add a new cohort from ATLAS</h3>
+<p>Browse the ATLAS demo site (<a href="https://atlas-demo.ohdsi.org" class="uri">https://atlas-demo.ohdsi.org</a>) and find another cohort definition relevant to this study (e.g., a different infection, another immunosuppressive drug, or a new autoimmune condition).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 1: Find a cohort ID from ATLAS</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Browse https://atlas-demo.ohdsi.org -&gt; Cohort Definitions</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Note the ID from the URL or the list</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 2: Export just the new cohort</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="co"># new_cohort &lt;- ROhdsiWebApi::exportCohortDefinitionSet(</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="co">#   baseUrl   = baseUrl,</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a><span class="co">#   cohortIds = c(YOUR_ID_HERE),</span></span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a><span class="co">#   generateStats = TRUE</span></span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a><span class="co"># )</span></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 3: Bind it to the existing set</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a><span class="co"># cohortDefinitionSet &lt;- bind_rows(cohortDefinitionSet, new_cohort)</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Step 4: Regenerate and re-run diagnostics</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<hr>
+</section>
+</section>
+<section id="clean-up" class="level2">
+<h2 class="anchored" data-anchor-id="clean-up">Clean up</h2>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">disconnect</span>(connection)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<hr>
+</section>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<p>In this module we covered the full OHDSI cohort diagnostics workflow:</p>
+<ol type="1">
+<li><strong>ROhdsiWebApi</strong> connects R to ATLAS, letting you pull cohort definitions programmatically</li>
+<li><strong><code>exportCohortDefinitionSet()</code></strong> downloads JSON + SQL for any set of ATLAS cohort IDs</li>
+<li><strong>Renaming and organizing</strong> cohorts ensures clean labels and traceability to ATLAS IDs</li>
+<li><strong><code>saveCohortDefinitionSet()</code></strong> writes everything to disk in the standard <code>inst/</code> layout for reproducibility</li>
+<li><strong>CohortGenerator</strong> instantiates cohorts against any OMOP CDM (Eunomia for testing, real databases for production)</li>
+<li><strong>CohortDiagnostics</strong> evaluates cohort quality across multiple dimensions</li>
+<li><strong>The Shiny viewer</strong> provides interactive exploration of diagnostic results</li>
+</ol>
+<section id="key-takeaways" class="level3">
+<h3 class="anchored" data-anchor-id="key-takeaways">Key takeaways</h3>
+<ol type="1">
+<li><strong>ATLAS is for defining; databases are for generating.</strong> Keep these steps separate and save definitions locally for reproducibility.</li>
+<li><strong>JSON definitions enable full diagnostics.</strong> Concept set diagnostics (orphan concepts, included source codes) only work with JSON, not SQL-only cohorts.</li>
+<li><strong>Empty cohorts on Eunomia are expected.</strong> Rare conditions and specialized drugs won’t appear in a 2,700-patient synthetic dataset. The workflow is the same on real data.</li>
+<li><strong>Multiple phenotype variants are a feature, not a bug.</strong> Running diagnostics on sensitive vs. specific variants helps you choose the right one for your study question.</li>
+<li><strong>Save everything to <code>inst/</code>.</strong> Your study package should run without ATLAS access. Anyone with the repo can <code>getCohortDefinitionSet()</code> and reproduce your cohorts.</li>
+</ol>
+</section>
+<section id="resources" class="level3">
+<h3 class="anchored" data-anchor-id="resources">Resources</h3>
+<ul>
+<li>ROhdsiWebApi: <a href="https://ohdsi.github.io/ROhdsiWebApi/" class="uri">https://ohdsi.github.io/ROhdsiWebApi/</a></li>
+<li>CohortGenerator: <a href="https://ohdsi.github.io/CohortGenerator/" class="uri">https://ohdsi.github.io/CohortGenerator/</a></li>
+<li>CohortDiagnostics: <a href="https://ohdsi.github.io/CohortDiagnostics/" class="uri">https://ohdsi.github.io/CohortDiagnostics/</a></li>
+<li>ATLAS demo: <a href="https://atlas-demo.ohdsi.org" class="uri">https://atlas-demo.ohdsi.org</a></li>
+<li>The Book of OHDSI — Chapter 12 (Characterization): <a href="https://ohdsi.github.io/TheBookOfOhdsi/" class="uri">https://ohdsi.github.io/TheBookOfOhdsi/</a></li>
+<li>Eunomia: <a href="https://ohdsi.github.io/Eunomia/" class="uri">https://ohdsi.github.io/Eunomia/</a></li>
 </ul>
 </section>
-<section id="session-3-ohdsi-basics-provisional" class="level3">
-<h3 class="anchored" data-anchor-id="session-3-ohdsi-basics-provisional">Session 3: OHDSI Basics (Provisional)</h3>
-<p>The Common Data Model and HADES ecosystem.</p>
+<section id="next-steps" class="level3">
+<h3 class="anchored" data-anchor-id="next-steps">Next steps</h3>
 <ul>
-<li><a href="slides/03_ohdsi-basics/slides.html">Slides</a></li>
-<li><a href="modules/03_ohdsi-basics/ohdsi-basics.html">Module: OHDSI Basics</a></li>
+<li>Run these same cohorts against an institutional CDM with real patient data</li>
+<li>Use diagnostic results to iterate on phenotype definitions in ATLAS</li>
+<li>Feed validated cohorts into Strategus for full study execution (CohortMethod, SCCS, etc.)</li>
 </ul>
 </section>
-</section>
-<section id="other-topics" class="level2">
-<h2 class="anchored" data-anchor-id="other-topics">Other Topics</h2>
-<ul>
-<li>Cohorts and Cohort Diagnostics</li>
-<li>Characterization</li>
-<li>CohortMethod: Population Level Effect Estimation</li>
-<li>Strategus</li>
-</ul>
-<p>(This will be built out as the course progresses.)</p>
-</section>
-<section id="resources" class="level2">
-<h2 class="anchored" data-anchor-id="resources">Resources</h2>
-<ul>
-<li><a href="https://ohdsi.org">OHDSI Website</a></li>
-<li><a href="https://ohdsi.github.io/Hades/">HADES Documentation</a></li>
-<li><a href="https://ohdsi.github.io/TheBookOfOhdsi/">The Book of OHDSI</a></li>
-<li><a href="https://ohdsi.github.io/CommonDataModel/">OMOP CDM Documentation</a></li>
-</ul>
 </section>
 
 </main>
