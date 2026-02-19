@@ -1,0 +1,224 @@
+---
+title: "Introduction to Strategus"
+subtitle: "Session 5: From Cohorts to End-to-End OHDSI Pipelines"
+format: revealjs
+---
+
+## Today's Agenda
+
+1. Why Strategus exists
+2. Core objects: modules, resources, specifications
+3. Practice-first workflow using Eunomia
+4. Real study repository orientation
+
+. . .
+
+Then: guided module practice.
+
+# Part 1: Why Strategus
+
+## The Coordination Problem
+
+A typical OHDSI study combines multiple packages:
+
+- Cohort generation
+- Diagnostics
+- Characterization
+- Estimation (CohortMethod, SCCS, PLP)
+
+. . .
+
+Running each package manually is hard to standardize across sites.
+
+## What Strategus Adds
+
+`Strategus` orchestrates HADES modules as one reproducible pipeline.
+
+- Define a study once
+- Share settings as JSON
+- Execute consistently at each site
+- Produce standardized outputs
+
+## Pedagogical Goal for Today
+
+Today is foundation, not method depth.
+
+- Understand Strategus as the orchestrator
+- Build one end-to-end mental model
+- Run a minimal pipeline on Eunomia
+
+. . .
+
+Next sessions dive into characterization/incidence and CohortMethod details.
+
+## Think in Terms of "Study as Configuration"
+
+Strategus separates:
+
+- **What to run** (analysis specifications)
+- **Where/how to run** (execution settings)
+
+This separation is what makes network execution practical.
+
+## High-Level Flow
+
+```
+Design study spec (JSON)
+        ↓
+Site-specific execution settings
+        ↓
+Strategus execute()
+        ↓
+Module outputs + upload-ready results
+```
+
+# Part 2: Core Building Blocks
+
+## What is a HADES Module?
+
+A module is a standardized analytic task.
+
+Examples:
+
+- `CohortGeneratorModule`
+- `CohortDiagnosticsModule`
+- `CharacterizationModule`
+- `CohortMethodModule`
+
+## Shared Resources
+
+Some inputs are reused across modules:
+
+- Cohort definitions
+- Negative control outcomes
+- Concept sets
+
+These go in `sharedResources` in the analysis specification.
+
+## Cohort Definitions: Organization Matters
+
+Before any module settings, get cohort assets cleanly organized:
+
+- Keep `Cohorts.csv`, JSON, and SQL folders structured
+- Use stable IDs and sensible cohort names
+- Keep definitions version-controlled and reviewable
+
+This helps keep your study comprehensible to others and easy to modify/work with.
+
+## Module Specifications
+
+Each module contributes its own settings block.
+
+Examples:
+
+- CohortDiagnostics: inclusion stats, incidence, concept checks
+- CohortMethod: target-comparator-outcome analyses
+- SCCS/PLP: model-specific designs
+
+## Analysis Specification = Pipeline Blueprint
+
+The analysis specification JSON captures:
+
+- Shared resources
+- Ordered module specifications
+- Method design choices
+
+No credentials or site-specific database details.
+
+# Part 3: Execution Model
+
+## Execution Settings
+
+Execution settings are site-local and typically include:
+
+- `cdmDatabaseSchema`
+- `workDatabaseSchema`
+- Cohort table names
+- Local work/results folders
+- Cell-count suppression threshold
+
+## Typical Runtime Call
+
+```r
+execute(
+  connectionDetails = connectionDetails,
+  analysisSpecifications = analysisSpecifications,
+  executionSettings = executionSettings
+)
+```
+
+Strategus instantiates modules and runs them in sequence.
+
+## What Gets Produced
+
+- CSV results per module
+- Data model specification for results
+- Artifacts that can be reviewed locally before sharing
+
+This supports transparent, auditable network studies.
+
+## Why use JSON?
+
+JSON-based settings make it easier to:
+
+- Version control study design
+- Diff changes between protocol versions
+- Re-run with the same logic later
+
+# Part 4: Practice + Real Study
+
+## In-Class Practice Script
+
+We will walk through one concrete script:
+
+`modules/05_strategus-intro/strategus-practice.R`
+
+It covers:
+
+- Pulling cohort definitions
+- Relabeling cohorts clearly
+- Building analysis + execution settings
+- Running a minimal Strategus pipeline on Eunomia
+
+## Real Study Repo to Inspect
+
+Semaglutide NAION study repository:
+
+<https://github.com/ohdsi-studies/SemaglutideNaion>
+
+Use it as a realistic reference for study structure and settings.
+
+# Part 5: Practical Team Workflow
+
+## Recommended Collaboration Pattern
+
+1. **Design phase**: author and review analysis specification
+2. **Pilot phase**: run on Eunomia or local test data
+3. **Site phase**: each site supplies execution settings
+4. **Review phase**: inspect outputs before upload
+
+## Pitfalls
+
+- Not pinning package versions with `renv`
+- Skipping local output QA before sharing
+
+## Strategus in the Course Arc
+
+We've moved from:
+
+- Data model fundamentals
+- Cohort definitions
+- Diagnostics thinking
+
+to orchestrating full study pipelines.
+
+## Next: Module Work
+
+Hands-on:
+
+1. Inspect a real analysis specification JSON
+2. Create execution settings for Eunomia
+3. Run a small Strategus execution
+4. Review the output structure
+
+`modules/05_strategus-intro/strategus-intro.qmd`

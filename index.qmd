@@ -35,12 +35,25 @@ Version control, remote databases, and how OHDSI handles SQL across platforms.
 - [Slides](slides/03_ohdsi-basics/slides.html)
 - [Module: Git, SQL, and the OMOP CDM](modules/03_ohdsi-basics/ohdsi-basics.html)
 
+### Session 4: The OMOP CDM and Cohort Definitions
+
+Building cohort logic, inspecting JSON/SQL definitions, and diagnostics intuition.
+
+- [Slides](slides/04_cohorts/slides.html)
+- [Module: Cohort Definitions and Diagnostics](modules/04_cohorts/cohorts.html)
+
+### Session 5: Introduction to Strategus
+
+Designing and executing study pipelines with analysis specifications and execution settings.
+
+- [Slides](slides/05_strategus-intro/slides.html)
+- [Module: Introduction to Strategus](modules/05_strategus-intro/strategus-intro.html)
+
 ## Other Topics
 
 - Cohorts and Cohort Diagnostics
 - Characterization
 - CohortMethod: Population Level Effect Estimation
-- Strategus
 
 (This will be built out as the course progresses.)
 

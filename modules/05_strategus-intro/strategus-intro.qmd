@@ -1,0 +1,250 @@
+---
+title: "Module 05: Introduction to Strategus"
+subtitle: "Designing and Executing Reproducible OHDSI Analysis Pipelines"
+editor_options:
+  chunk_output_type: console
+---
+
+## Agenda
+
+1. Understand the Strategus mental model
+2. Review a real Strategus study repository
+3. Run a guided practice script on Eunomia
+4. Connect this foundation to upcoming methods sessions
+
+---
+
+## 1. Strategus Mental Model
+
+Strategus separates study logic into two objects:
+
+- **Analysis specifications**: what to run (methods + settings)
+- **Execution settings**: where/how to run (database schema, folders, etc.)
+
+This is a key design for OHDSI network studies: one protocol, many sites.
+
+### Core idea
+
+Think of Strategus as a study orchestration layer over HADES modules.
+
+```text
+Analysis specification JSON
+  +
+Execution settings JSON
+  +
+Connection details
+  =>
+execute()
+```
+
+---
+
+## 2. Load and Inspect an Analysis Specification
+
+For this module, we will use the built-in Strategus test specification.
+
+```{r}
+#| eval: false
+library(Strategus)
+
+analysisSpecifications <- ParallelLogger::loadSettingsFromJson(
+  fileName = system.file(
+    "testdata/cdmModulesAnalysisSpecifications.json",
+    package = "Strategus"
+  )
+)
+```
+
+### Explore what is inside
+
+```{r}
+#| eval: false
+names(analysisSpecifications)
+```
+
+Questions:
+
+1. Do you see `sharedResources`?
+2. Do you see `moduleSpecifications`?
+3. How many module specifications are present?
+
+```{r}
+#| eval: false
+length(analysisSpecifications$moduleSpecifications)
+```
+
+### Peek at module names
+
+```{r}
+#| eval: false
+vapply(
+  X = analysisSpecifications$moduleSpecifications,
+  FUN = function(x) x$module,
+  FUN.VALUE = character(1)
+)
+```
+
+---
+
+## 2b. Real Study Repository Orientation
+
+Use this repository as a concrete example of a modern Strategus study:
+
+- Semaglutide NAION: <https://github.com/ohdsi-studies/SemaglutideNaion>
+
+As you browse, focus on:
+
+1. Where analysis specifications live
+2. Where execution settings are expected
+3. How cohort definitions are organized and named
+
+Why this matters: your study's quality depends heavily on clean cohort assets (CSV, JSON, SQL), stable IDs, and sensible labels before you start composing modules.
+
+---
+
+## 3. Practice Script: Build a Minimal Strategus Study
+
+For class, we will use one script end-to-end:
+
+- `modules/05_strategus-intro/strategus-practice.R`
+
+This script demonstrates a practical pattern:
+
+1. Pull cohort definitions from Strategus example assets
+2. Relabel cohort names clearly for readability
+3. Build shared resources + module specifications
+4. Create execution settings for Eunomia
+5. Execute and inspect output folders
+
+Run it in chunks so you can inspect each object as it is created.
+
+---
+
+## 4. Create Execution Settings
+
+Now we define site-local execution settings using Eunomia.
+
+```{r}
+#| eval: false
+library(Eunomia)
+
+connectionDetails <- getEunomiaConnectionDetails()
+
+outputFolder <- file.path(tempdir(), "strategus-intro")
+dir.create(outputFolder, recursive = TRUE, showWarnings = FALSE)
+
+executionSettings <- createCdmExecutionSettings(
+  workDatabaseSchema = "main",
+  cdmDatabaseSchema = "main",
+  cohortTableNames = CohortGenerator::getCohortTableNames(),
+  workFolder = file.path(outputFolder, "work_folder"),
+  resultsFolder = file.path(outputFolder, "results_folder"),
+  minCellCount = 5
+)
+```
+
+### Save execution settings
+
+```{r}
+#| eval: false
+ParallelLogger::saveSettingsToJson(
+  object = executionSettings,
+  fileName = file.path(outputFolder, "eunomiaExecutionSettings.json")
+)
+```
+
+Why save this file?
+
+- Makes your run configuration explicit
+- Supports reproducibility
+- Lets collaborators review site-level execution settings
+
+---
+
+## 4. Execute Strategus
+
+Run the study pipeline using the three required inputs.
+
+```{r}
+#| eval: false
+execute(
+  connectionDetails = connectionDetails,
+  analysisSpecifications = analysisSpecifications,
+  executionSettings = executionSettings
+)
+```
+
+Strategus will instantiate needed modules and execute each one in sequence.
+
+### Inspect output structure
+
+```{r}
+#| eval: false
+list.files(outputFolder, recursive = TRUE)
+```
+
+Look for:
+
+- Work artifacts
+- Module-specific results folders
+- CSV outputs that can be loaded for review
+
+---
+
+## 5. Read Results in Vanilla R
+
+For a pure Strategus workflow, read module output CSV files directly.
+
+```{r}
+#| eval: false
+library(readr)
+
+# Example pattern (replace with an actual Strategus output CSV path)
+result_tbl <- read_csv(file.path(outputFolder, "results_folder", "some_module", "some_result.csv"))
+
+dplyr::glimpse(result_tbl)
+```
+
+If you create derived summaries, write them as normal files in your project.
+
+```{r}
+#| eval: false
+summary_tbl <- result_tbl |>
+  dplyr::count(.data$analysisId, name = "n_rows")
+
+readr::write_csv(summary_tbl, file.path(outputFolder, "summary_by_analysis.csv"))
+```
+
+---
+
+## 6. Reflection Questions
+
+1. What parts of a study belong in analysis specifications vs execution settings?
+2. Why is JSON-based configuration useful for multisite studies?
+3. What QA checks would you run before sharing module outputs?
+4. How would `renv` complement Strategus for reproducibility?
+
+---
+
+## 7. Session Positioning
+
+This session is foundation:
+
+- Strategus as orchestrator
+- Study-as-configuration model
+- Cohort organization and naming discipline
+
+Next sessions will go deeper into:
+
+- Characterization and incidence design details
+- CohortMethod design and estimation choices
+
+---
+
+## Resources
+
+- Strategus docs: <https://ohdsi.github.io/Strategus/>
+- Introduction article: <https://ohdsi.github.io/Strategus/articles/IntroductionToStrategus.html>
+- Creating specifications: <https://ohdsi.github.io/Strategus/articles/CreatingAnalysisSpecification.html>
+- Execute Strategus: <https://ohdsi.github.io/Strategus/articles/ExecuteStrategus.html>
+- Strategus study template: <https://github.com/ohdsi-studies/StrategusStudyRepoTemplate>

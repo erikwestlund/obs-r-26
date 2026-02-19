@@ -140,5 +140,8 @@ ehthumbs.db
 # Course brainstorming (local only)
 brainstorming/
 
+# Strategus practice artifacts
+modules/05_strategus-intro/strategus-practice/
+
 /.quarto/
 **/*.quarto_ipynb
