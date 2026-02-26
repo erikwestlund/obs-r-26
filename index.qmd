@@ -49,13 +49,23 @@ Designing and executing study pipelines with analysis specifications and executi
 - [Slides](slides/05_strategus-intro/slides.html)
 - [Module: Introduction to Strategus](modules/05_strategus-intro/strategus-intro.html)
 
-## Other Topics
+### Session 6: Strategus Recap + GiBleed Demo
 
-- Cohorts and Cohort Diagnostics
-- Characterization
-- CohortMethod: Population Level Effect Estimation
+Brief recap of Strategus foundations, then a concrete demo using Eunomia GiBleed.
 
-(This will be built out as the course progresses.)
+- [Slides](slides/06_strategus-gibleed-demo/slides.html)
+- [Example: Build Analysis Specification](modules/06_strategus-gibleed-demo/createStrategusAnalysisSpecification.R)
+- [Example: Execute Study](modules/06_strategus-gibleed-demo/executeStudy.R)
+
+### Session 7: Population-Level Estimation with CohortMethod
+
+Propensity scores, the CohortMethodModule, and diagnostics for comparative cohort studies.
+
+- [Slides](slides/07_cohort-method/slides.html)
+
+## Assignments
+
+- [Strategus Study Specification Assignment (PDF)](assignments/strategus-study-specification-assignment.pdf)
 
 ## Resources
 

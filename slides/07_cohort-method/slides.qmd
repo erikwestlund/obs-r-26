@@ -1,0 +1,857 @@
+---
+title: "Propensity Score Analyses & CohortMethod"
+subtitle: "Session 7: From Concepts to Strategus Specification"
+format: revealjs
+---
+
+```{r setup, include=FALSE}
+
+library(bigstatsr)
+library(broom)
+library(cobalt)
+library(Cyclops)
+library(dagitty)
+library(dplyr)
+library(ggdag)
+library(ggplot2)
+library(kableExtra)
+library(MatchIt)
+library(parallel)
+library(simsurv)
+library(survey)
+library(survival)
+library(survminer)
+library(tidyr)
+library(twang)
+library(WeightIt)
+
+```
+
+## Agenda
+
+- Walk through the logic of propensity scores using simulations
+- Introduce `CohortMethod` and how it implements these ideas at scale
+- Show how `CohortMethodModule` fits into a Strategus specification
+- Connect to Part 2 of the assignment
+
+## Motivating Example: Randomized Controlled Trials
+
+- Randomized controlled trials (RCTs) are considered the gold standard for estimating causal effects.
+- In an RCT, subjects are randomly assigned to treatment or control groups.
+- This enables the estimation of unbiased causal effects by ensuring that the treatment and control groups are `the same at baseline.`
+
+## Understanding "The Same at Baseline"
+
+- In an RCT, the treatment and control groups are `the same at baseline` because of random assignment.
+- How do we randomly assign? We flip a coin (or run a computer program).
+- Because of randomization, on expectation, all potential confounders are evenly distributed between the treatment and control groups
+
+## RCTs Visualized
+
+```{r, fig.align='center', fig.height=5}
+rct_dag <- dagitty('
+dag {
+  R [pos="-1,0"]
+  Tx [pos="0,0"]
+  Y [pos="1,0"]
+  U [pos="0,1"]
+
+  R -> Tx
+  Tx -> Y
+  U -> Y
+}
+')
+
+# Visualize the DAG with ggdag
+ggdag(rct_dag, text = TRUE, layout = "auto") + theme_void()
+```
+
+## Different Designs And Probability of Treatment
+
+- Sometimes, the treatment and control groups are not the same size.
+- For example, in a 2:1 randomization, the probability of being assigned to the treatment group is 0.67 and the control group is 0.33.
+- In a stratified RCT, probabilities of treatment may vary by strata.
+- Regardless of design, the researcher ensures that `p(Tx)` is known and independent of unobserved confounders.
+
+## Summarizing: P(Tx) In RCTs
+
+- `p(Tx)` is known
+- `p(Tx)` is independent of unobserved confounders because of randomization
+- Because of this, we can estimate the effect of treatment on the outcome.
+
+## Observational Studies
+
+```{r, fig.align='center', fig.height=5}
+
+obs_dag <- dagitty('
+dag {
+  Tx [pos="-1,0"]
+  Y [pos="1,0"]
+  U [pos="0,1"]
+
+  Tx -> Y
+  U -> Tx
+  U -> Y
+}
+')
+
+# Visualize the DAG with ggdag
+ggdag(obs_dag, text = TRUE, layout = "auto") + theme_void()
+```
+- Above, an unobserved confounder `U` affects both the treatment `Tx` and the outcome `Y`.
+
+## Confounding
+
+- Without conditioning on `U`, the estimated effect treatment `Tx` effect will be biased.
+- This is because `U` is a common cause of `Tx` and `Y`.
+- Without modeling `U`, we will attribute the effect of `U` on `Y` to the effect of `Tx` on `Y`.
+
+## Simulating Data
+
+- We will simulate a handful of datasets
+- I wrote the below function to help with this; provided for reference
+
+```{r, echo=TRUE}
+generate_sim_data <- function(n = 500,
+                              ct_ratio = 4,
+                              tx_es = 2,
+                              u_es = 4,
+                              x_count = 3,
+                              x_u_count = x_count,
+                              lg_contributors = 2,
+                              md_contributors = 1,
+                              lg_var_pct = 0.6,
+                              md_var_pct = 0.3,
+                              binary_outcome = FALSE,
+                              time_to_event = FALSE,
+                              censoring_rate = 0.2,
+                              seed = 123,
+                              eval_models = FALSE) {
+  set.seed(seed)
+
+  if (lg_contributors + md_contributors > x_u_count) {
+    stop("Error: Large and medium contributor counts exceed total x_u_count.")
+  }
+
+  sm_var_pct <- 1 - lg_var_pct - md_var_pct
+  if (round(lg_var_pct + md_var_pct + sm_var_pct, 6) != 1) {
+    stop("Error: Variance proportions must sum to 1.")
+  }
+
+  sm_contributors <- x_u_count - lg_contributors - md_contributors
+
+  X <- as.data.frame(matrix(rnorm(n * x_count, mean = 0, sd = 1), nrow = n))
+  colnames(X) <- paste0("X", 1:x_count)
+
+  big_weight <- ifelse(lg_contributors > 0, sqrt(lg_var_pct / lg_contributors), 0)
+  medium_weight <- ifelse(md_contributors > 0, sqrt(md_var_pct / md_contributors), 0)
+  small_weight <- ifelse(sm_contributors > 0, sqrt(sm_var_pct / sm_contributors), 0)
+
+  U <- numeric(n)
+
+  if (lg_contributors > 0) {
+    U <- U + rowSums(X[, 1:lg_contributors, drop = FALSE] * big_weight)
+  }
+  if (md_contributors > 0) {
+    U <- U + rowSums(X[, (lg_contributors + 1):(lg_contributors + md_contributors), drop = FALSE] * medium_weight)
+  }
+  if (sm_contributors > 0) {
+    U <- U + rowSums(X[, (lg_contributors + md_contributors + 1):x_u_count, drop = FALSE] * small_weight)
+  }
+  find_alpha <- function(alpha) mean(plogis(U + alpha)) - (1 / (1 + ct_ratio))
+  alpha_opt <- uniroot(find_alpha, interval = c(-5, 5))$root
+
+  prob_treated <- plogis(U + alpha_opt)
+  Tx <- rbinom(n, 1, prob_treated)
+
+  if (time_to_event) {
+    base_hazard <- 0.1
+    hazard <- base_hazard * exp(log(tx_es) * Tx + log(u_es) * U)
+    time <- -log(runif(n)) / hazard
+
+    censoring_time <- quantile(time, probs = 1 - censoring_rate)
+    event <- as.integer(time <= censoring_time)
+    time <- pmin(time, censoring_time)
+
+    df <- data.frame(id = 1:n, Tx = Tx, U = U, Y = time, event = event, X)
+  }
+
+  else if (binary_outcome) {
+    logit_Y <- log(tx_es) * Tx + log(u_es) * U
+    prob_Y <- plogis(logit_Y)  # Convert logit to probability
+    Y <- rbinom(n, 1, prob_Y)  # Generate binary outcome
+    df <- data.frame(id = 1:n, Tx = Tx, U = U, Y = Y, X)
+  } else {
+    Y <- tx_es * Tx + u_es * U + rnorm(n, mean = 0, sd = 1)
+    df <- data.frame(id = 1:n, Tx = Tx, U = U, Y = Y, X)
+  }
+
+  x_vars <- paste0("X", 1:x_count)
+  formula_y_tx <- as.formula("Y ~ Tx")
+  formula_y_tx_u <- as.formula("Y ~ Tx + U")
+  formula_y_tx_x <- as.formula(paste("Y ~ Tx +", paste(x_vars, collapse = " + ")))
+  formula_tx_x <- as.formula(paste("Tx ~", paste(x_vars, collapse = " + ")))
+
+  models <- list()
+
+  if (eval_models) {
+    if (time_to_event) {
+      models$model_y_tx <- coxph(Surv(time, event) ~ Tx, data = df) |> broom::tidy()
+      models$model_y_tx_u <- coxph(Surv(time, event) ~ Tx + U, data = df) |> broom::tidy()
+      models$model_y_tx_x <- coxph(Surv(time, event) ~ Tx + ., data = df) |> broom::tidy()
+    } else if (binary_outcome) {
+      models$model_y_tx <- glm(formula_y_tx, data = df, family = binomial()) |> broom::tidy()
+      models$model_y_tx_u <- glm(formula_y_tx_u, data = df, family = binomial()) |> broom::tidy()
+      models$model_y_tx_x <- glm(formula_y_tx_x, data = df, family = binomial()) |> broom::tidy()
+    } else {
+      models$model_y_tx <- lm(formula_y_tx, data = df) |> broom::tidy()
+      models$model_y_tx_u <- lm(formula_y_tx_u, data = df) |> broom::tidy()
+      models$model_y_tx_x <- lm(formula_y_tx_x, data = df) |> broom::tidy()
+    }
+  }
+
+  return(list(
+    df = df,
+    formulas = list(
+      formula_y_tx = formula_y_tx,
+      formula_y_tx_u = formula_y_tx_u,
+      formula_y_tx_x = formula_y_tx_x,
+      formula_tx_x = formula_tx_x
+    ),
+    models = models,
+    params = list(
+      n = n,
+      ct_ratio = ct_ratio,
+      tx_es = tx_es,
+      u_es = u_es,
+      x_count = x_count,
+      x_u_count = x_u_count,
+      time_to_event = time_to_event,
+      binary_outcome = binary_outcome,
+      censoring_rate = censoring_rate,
+      seed = seed,
+      alpha_opt = alpha_opt
+    )
+  ))
+}
+```
+
+## Illustrated with Simulated Data
+
+- `Y` will be a continuous outcome, `Tx` is a binary treatment, `U` is an unobserved confounder, and `p(Tx)` is the probability of treatment determined by `U`.
+- U is determined by three variables, `A`, `B`, and `C`, which are all normally distributed.
+- There are ~4 non-treated for every treated subject.
+- The treatment effect is 2, but the estimated effect is biased because of confounding.
+
+## Creating the sim data
+
+```{r, echo=TRUE}
+
+obs_sim_1 <- generate_sim_data(
+  n = 5000,
+  tx_es = 2,
+  u_es = 1,
+  ct_ratio = 4,
+  x_count = 4,
+  x_u_count = 4,
+  lg_contributors = 2,
+  md_contributors = 1,
+  lg_var_pct = 0.6,
+  md_var_pct = 0.4
+)
+
+df <- obs_sim_1$df
+```
+
+## DAG of Simulated Data
+
+```{r, fig.align='center', fig.height=5}
+dag <- dagitty('
+dag {
+  X1 [pos="-2,1"]
+  X2 [pos="-2,0"]
+  X3 [pos="-2,-1"]
+  U [pos="-1,0"]
+  Tx [pos="0,0"]
+  Y [pos="1,0"]
+
+  X1 -> U
+  X2 -> U
+  X3 -> U
+  U -> Tx
+  Tx -> Y
+  U -> Y
+}')
+
+ggdag(dag, text = TRUE, layout = "auto") + theme_void()
+
+```
+
+## Raw Relationship Between Tx and Y
+
+```{r, echo=TRUE}
+ggplot(df, aes(x = Tx, y = Y)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_minimal() +
+  labs(title = "Relationship between Y and Tx")
+```
+
+## Regression of Y on Tx
+
+- We estimate the effect of Tx to be `2.87` when it's really 2
+
+```{r, echo=TRUE}
+lm(Y ~ Tx, data = df) |> tidy() |> kable()
+```
+
+## Relationship Between Y and U, stratified by Tx (In Fantasy Land)
+
+```{r, echo=FALSE}
+ggplot(df, aes(x = U, y = Y, color = factor(Tx))) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_minimal()
+```
+
+- We do not observe U, so "in real life" we cannot stratify on it.
+- Here, we do know the causes of U, so we can condition on them.
+
+## Regression of Y on Tx and U (In Fantasy Land)
+
+- We estimate the effect of Tx to be `2.00`; right on the money
+
+```{r, echo=TRUE}
+lm(Y ~ Tx + U, data = df) |> tidy() |> kable()
+```
+
+## But We Don't Observe U, so we stratify on A, B, and C
+
+- We estimate the effect of Tx again to be `2.00`.
+
+```{r, echo=TRUE}
+lm(Y ~ Tx + X1 + X2 + X3, data = df) |> tidy() |> kable()
+```
+
+## EHR Data & Regression Adjustment
+
+- With EHR data, we often have many potential Xs
+- However, we don't always have a good causal model of U
+- Regression adjustment is challenging because there are many Xs, often correlated with each other
+- Propensity scores can help
+
+## The Propensity Score
+
+- The propensity score is `p(Tx) | X` where `p(Tx)` is the probability of being in the treatment group given `X`, a set of covariates.
+- If we can accurately model the propensity score, we can estimate an unbiased treatment effect.
+
+## Why Does This Work?
+
+- Consider our earlier RCT, where `p(Tx)` is known and is independent of unobserved confounders.
+- If X is exhaustive of the causes of `p(Tx)`, then `p(Tx) | X` is independent of unobserved confounders.
+- If we match cases on the propensity score, we are setting up something similar to an RCT, but instead of two matched groups, we have a bunch of matched groups, where each has the same `p(Tx)` given `X`.
+
+## Propensity Score Estimation
+
+- The propensity score is a data reduction technique.
+- In the prior simulation, we can estimate the propensity score by modeling `Tx` as a function of `A`, `B`, and `C`.
+- We can then match the treatment and control groups on the propensity score and using the new data set, estimate `Y ~ Tx`
+
+## Doing This
+
+- Here, we use the `MatchIt` package to match every treatment case to a set of controls
+- Non-matched cases are thrown out.
+- Compare pre and post differences.
+- Note: the estimand here is the average treatment effect on the treated (ATT).
+
+## Required Code
+
+```{r, echo=TRUE}
+
+match_out <- MatchIt::matchit(
+  Tx ~ X1 + X2 + X3,
+  data = df,
+  method = "nearest",
+  distance = "logit",
+  ratio = 1
+)
+matched_df <- MatchIt::match.data(match_out)
+
+```
+
+
+## Outcome Model
+
+- We regress `Y` on `Tx` using the matched data, with no Xs aside from from `Tx`
+- We almost recover the true effect of `2`, here `2.11`
+
+```{r, echo=TRUE}
+lm(Y ~ Tx, data=matched_df) |> tidy() |> kable()
+```
+
+## Different algorithms
+
+- There are numerous ways you can calculate the propensity scores, such as nearest neighbor, optimal matching, full matching, and more.
+- There are numerous ways you can create your analysis data frame, such as N:1 matching of weighting.
+- In weighting, you don't throw out cases, but weight cases up and down based upon the inverse of the propensity score.
+
+## Weighting Example
+
+- When weighting, we take the propensity score, and transform it to a weight using the formula $w = \frac{1}{ps}$.
+- For example, if `ps = 0.2`, then $w = \frac{1}{0.2} = 5$; when it is 0.8, then $w = \frac{1}{0.8} = 1.25$
+- Lower probability cases get weighted up, while higher probability cases get weighted down
+
+## Weighting Code
+
+- We use the WeightIt package. Here we use `optimal weighting`
+- We can use the `survey` package to estimate the treatment effect using the weights.
+
+```{r, echo=TRUE}
+weight_out <- WeightIt::weightit(Tx ~ X1 + X2 + X3, data = df, method = "optweight", estimand = "ATT")
+weight_df <- df |>  mutate(weights = weight_out$weights)
+survey::svyglm(Y ~ Tx, design = survey::svydesign(ids = ~1, weights = ~weights, data = weight_df)) |> tidy() |> kable()
+
+```
+
+## CohortMethod
+
+- `CohortMethod` is a HADES package that uses propensity scores to estimate treatment effects comparing a treatment and comparator.
+- One challenge & promise of OMOP data is we often have thousands of possible covariates.
+- These covariates include demographics, care site, diagnoses, procedures, drugs, and more.
+- `CohortMethod` lets us use all of these covariates to estimate the propensity score and then estimate the treatment effect.
+
+## CohortMethod (cont.)
+
+- `CohortMethod` requires at a minimum providing cohort definitions of one outcome, one target/treatment, and one control/comparator.
+- It can also handle running multiple studies with multiple outcomes, treatments, comparators, and estimation methods.
+- The package also allows for the use of negative controls to 1) test for systematic error and 2) calibrate estimates.
+
+## CohortMethod (cont. 2)
+
+- `CohortMethod` uses LASSO regularized regression to estimate the propensity score using a large set of covariates.
+- It supports multiple outcome models, including logistic regression (binary outcome), Cox regression (time-to-event outcome), and Poisson regression (rate outcome).
+
+## CohortMethod & Survival Analysis
+
+- In most OHDSI `CohortMethod` studies, our outcome is time-to-event; the estimand of interest is the hazard ratio.
+- We are comparing the risk of an event in the treatment/target group to the risk of an event in the control/comparator group at any one time.
+- `CohortMethod` can estimate the Cox proportional hazards model, which provides us the hazard ratio
+- This requires an assumption of proportional hazards
+
+## Survival Analysis (cont.)
+
+- In survival models, censoring -- when we don't know the outcome of a subject at the end of the study -- is an issue
+- Cox models can handle censoring so long as censoring is independent after controlling for the Xs
+
+## Propensity Scores with Hazard Models
+
+- In survival analysis, we can estimate the propensity score using a survival model using the same process
+
+  - Estimate probability of treatment
+  - Match or weight cases
+  - Estimate the treatment effect using the matched/weighted data
+
+## Simulating a Time-to-Event Outcome With Large N and Many Xs
+
+- Simulation set up: 100,000 cases, 500 covariates, and a time-to-event outcome
+- Treatment effect and Y both have hazard ratio of 2, i.e., their coefficients should be ~exp(0.7) = 2
+- Unobserved confounding systematically affects Y and Tx.
+
+## Many Xs
+
+- Of the Xs:
+
+  - 3 Xs explain 50% of U
+  - 7 Xs explain 30% of U
+  - 20 Xs explain 20% of U
+  - 470 Xs are unrelated
+
+## Simulation
+
+```{r, echo=TRUE}
+obs_sim_2 <- generate_sim_data(
+  n = 100000,
+  tx_es = 2,
+  u_es = 2,
+  ct_ratio = 4,
+  x_count = 500,
+  x_u_count = 30,
+  lg_contributors = 3,
+  md_contributors = 7,
+  lg_var_pct = 0.5,
+  md_var_pct = 0.3,
+  time_to_event = TRUE
+)
+
+```
+
+## Kaplan-Meier Curve code
+
+- We can see that the treatment group has a lower survival rate than the control group
+- KM curves also useful for assessing proportional hazards assumption; the curves should ideally be parallel
+
+```{r, echo=TRUE}
+km_fit <- survfit(Surv(Y, event) ~ Tx, data = obs_sim_2$df)
+
+plot <- ggsurvplot(km_fit,
+           data = obs_sim_2$df,
+           conf.int = FALSE,
+           risk.table = TRUE,  # Show risk table
+           pval = FALSE,
+           legend.title = "Group",
+           legend.labs = c("Control", "Treatment"),
+           xlab = "Time",
+           ylab = "Survival Probability",
+           ggtheme = theme_minimal())
+
+```
+
+## KM Curve Example
+
+```{r, echo=FALSE}
+plot
+```
+
+## Outcome Model Without Statistical Adjustment
+
+- We can see there is a bias; the estimated HR is `2.87`; the reality is `2`
+- We are significantly biased upwards
+
+```{r, echo=TRUE}
+m <- survival::coxph(Surv(Y, event) ~ Tx, data = obs_sim_2$df)
+m <- m |> tidy()
+m$estimate <- exp(m$estimate)
+m |> kable()
+```
+
+## Using LASSO to estimate the propensity score
+
+- We use LASSO to estimate the propensity score, the same technique used by `CohortMethod` (although not the same implementation)
+- We will use `WeightIt` rather than `MatchIt`, since using IPW is common practice with survival analysis
+
+## PS Weighting/Outcome Model Code
+
+```{r , echo=TRUE}
+survival_sim_ipw <- weightit(obs_sim_2$formulas$formula_tx_x,  # Tx ~ X1 + X2 + X3 + ...
+                       data = obs_sim_2$df,
+                       distance = "lasso",
+                       estimand = "ATT")
+
+obs_sim_2$df$weights <- survival_sim_ipw$weights
+
+# Fit Cox model with survey package using IPW
+ipw_cox = survey::svycoxph(Surv(Y, event) ~ Tx, design = survey::svydesign(ids = ~1, weights = ~weights, data = obs_sim_2$df))
+ipw_results <- tidy(ipw_cox)
+ipw_results$estimate <- exp(ipw_results$estimate)  # Convert log HRs to HRs
+
+```
+
+## Model Results
+
+- Estimated HR is `1.72`
+- This is better than our unadjusted model, but still biased
+- Why?
+
+```{r, echo=TRUE}
+ipw_results |> kable()
+```
+
+## Challenges in Propensity Score Modeling
+
+- In any model (including those with continuous, time-to-event, binary, or rate outcomes), if there are non-linearities or interactions in the relationship between Y, Tx, and U, a simple propensity score model may not fully capture these effects unless they are explicitly modeled.
+- This can lead to residual confounding and biased treatment effect estimates.
+
+## Challenges in Propensity Score Modeling (cont.)
+
+- Time-to-event data (survival models), rate data (poisson models), and binary outcomes (logistic models) are inherently non-linear and can be especially prone to these issues, as their structure often deviates from simple linear relationships.
+- The key takeaway is that propensity score modeling is not a magic bullet, but we have techniques and adjustments that can still help mitigate bias and improve estimation.
+
+## Doubly Robust Estimation
+
+- So-called `doubly robust` estimation can help with bias in propensity score models
+- In doubly robust models, we first estimate the propensity score, doing our best possible job to estimate the probability of treatment given the covariates (e.g., `Tx ~ X1 + X2 + X3...`)
+- We then estimate the outcome model, again specifying the most accurate model possible. (`Y ~ Tx + X1 + X2 + X3...`)
+
+## Doubly Robust Estimation (cont.)
+
+- If either the propensity score model or the outcome model is correctly specified, the treatment effect estimate will be unbiased
+- `CohortMethod` supports this and it is easy to implement in standard PS analyses.
+
+## Add Xs to the outcome model
+
+- Here, we will start by just adding X1-X3 to the outcome model; these are our most important Xs
+- We inch closer to 2, with $e^{\beta_{Tx}} = 1.81$
+
+```{r}
+ipw_cox_dr1 = survey::svycoxph(Surv(Y, event) ~ Tx + X1 + X2 + X3, design = survey::svydesign(ids = ~1, weights = ~weights, data = obs_sim_2$df))
+ipw_results_dr1 <- tidy(ipw_cox_dr1)
+ipw_results_dr1$estimate <- exp(ipw_results_dr1$estimate)
+ipw_results_dr1 |> kable()
+```
+
+## Add more Xs
+
+- X1-X3 contributed 50% to Y; X4-X10 contribute 30%
+- We now inch closer to 2, with $e^{\beta_{Tx}} = 1.91$
+
+```{r}
+ipw_cox_dr2 = survey::svycoxph(Surv(Y, event) ~ Tx + X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 + X9 + X10, design = survey::svydesign(ids = ~1, weights = ~weights, data = obs_sim_2$df))
+ipw_results_dr2 <- tidy(ipw_cox_dr2)
+ipw_results_dr2$estimate <- exp(ipw_results_dr2$estimate)
+ipw_results_dr2 |> kable()
+```
+
+## Add all Xs
+
+- The `CohortMethod` package uses the `Cyclops` package to estimate models. It is designed to handle large data with many covariates; up to the millions of each
+- Here, we will add all the Xs, both the ones that matter and don't (we won't always know)
+- We'll then fit our final model using `Cyclops`
+
+## Prepare the Cyclops formula and data
+
+- We have to first create the formula and a Cyclops dataframe
+- It's good to get some practice using the various packages that make up HADES, because sometimes you will have to use them directly to debug or solve a problem.
+
+```{r, echo=TRUE}
+
+# Create a formula with all the Xs
+x_vars <- paste0("X", 1:500)   # Generate variable names X1 to X500
+formula_str <- paste("Surv(Y, event) ~ Tx +", paste(x_vars, collapse = " + "))  # Build formula string
+formula_obj <- as.formula(formula_str)  # Convert to formula object
+
+# Create Cyclops Data with IPW Weights
+cyclops_data <- createCyclopsData(
+  formula = formula_obj,
+  data = obs_sim_2$df,
+  modelType = "cox"
+)
+```
+
+## Fit the model
+
+- We then fit the model using Cyclops
+- Then we can get the confidence interval for the treatment effect
+- It's not the most ergonomic in terms of output, but we can extract the `Tx` coefficient and confidence intervals
+
+```{r, echo=TRUE}
+
+# Fit the IPW-Weighted Cox Model with Cyclops
+ipw_cox_dr3 <- fitCyclopsModel(
+  cyclops_data,
+  prior = createPrior("none"),  # No regularization (MLE estimation),
+  weights = obs_sim_2$df$weights
+)
+
+coefs <- coef(ipw_cox_dr3)
+tx_coef <- coefs[1]
+tx_ci <- confint(ipw_cox_dr3, c(1))
+ll <- tx_ci[2]
+ul <- tx_ci[3]
+
+```
+
+## Full Sim Model Results
+
+- We recover the true effect of $e^{\beta_{Tx}} = 2.01$
+
+```{r, echo=TRUE}
+tribble(
+  ~"Estimate", ~"LL", ~"UL",
+  tx_coef, ll, ul,
+) |> exp() |>  kable()
+```
+
+## Diagnostics and Propensity Scores
+
+- When running CohortMethod with the intention to publish, it is a norm to prespecify diagnostics
+- Studies with failed diagnostics will not be published
+- Specific diagnostics used to assess the quality of the propensity score model include:
+
+  - Covariate balance
+  - Overlap / equipoise
+
+## Covariate Balance
+
+- Covariate balance is the extent to which the propensity score model has balanced the covariates between the treatment and control groups
+- With `WeightIt`, you can run a summary on the weights; pay particular attention to the largest weights
+- With `MatchIt`, you can run a summary on the matching function; pay particular attention to "Std. Mean Diff."
+- You can also use the `cobalt` package to visualize numerous diagnostics
+
+## Match It Summary
+
+- Using small matched dataset
+
+```{r, echo=TRUE}
+match_out |> summary() |> head()
+```
+
+## WeightIt Summary
+
+- Using large weighted dataset
+
+```{r, echo=TRUE}
+
+survival_sim_ipw |> summary() |> head()
+
+```
+## Balance Plots
+
+- This plot shows the standardized mean difference between the treatment and control groups for each covariate
+- Note how our large predictors have been been cut down post-matching
+
+```{r, echo=TRUE}
+cobalt::love.plot(survival_sim_ipw, threshold = 0.2) + theme(axis.text.y = element_blank())
+```
+
+## CohortMethod Balance Plot
+
+- We want all the points to be below our diagnostic value on the y-axis.
+
+![](cohort_method_balance_plot.png)
+
+## Common Support
+
+- We want to make sure there is overlap in the propensity scores
+- Here we can see that there is a lot of overlap, with some difficulty in the tails
+- We can also see the cases we threw out
+
+## Overlap (`jitter`) Plot
+
+- This is from our earlier example; you can't do jitter plots with weighted data
+
+```{r, echo=TRUE}
+plot(match_out, type = "jitter")
+```
+
+## Balance Plot
+
+- Below is the overlap of propensity scores from our large-N weighted model
+
+```{r}
+bal.plot(survival_sim_ipw)
+```
+
+## CohortMethod Balance Plots
+
+- Below are examples of good and bad balance plots from CohortMethod
+
+![](cohort_method_common_support.png)
+
+# CohortMethod in Strategus
+
+## CohortMethodModule
+
+The [`CohortMethodModule`](https://ohdsi.github.io/Strategus/reference/CohortMethodModule.html) wraps CohortMethod for use in a Strategus analysis specification.
+
+```r
+cmModule <- CohortMethodModule$new()
+formals(cmModule$createModuleSpecifications)
+```
+
+## createModuleSpecifications Defaults
+
+```
+cmAnalysisList                  = <required>
+targetComparatorOutcomesList    = <required>
+analysesToExclude               = NULL
+refitPsForEveryOutcome          = FALSE
+refitPsForEveryStudyPopulation  = TRUE
+cmDiagnosticThresholds          = CohortMethod::createCmDiagnosticThresholds()
+```
+
+The two required inputs are:
+
+- A list of **analysis designs** (how to estimate)
+- A list of **target-comparator-outcome** combinations (what to estimate)
+
+## Diagnostic Thresholds Defaults
+
+```r
+CohortMethod::createCmDiagnosticThresholds(
+    mdrrThreshold = 10,                  # minimum detectable relative risk
+    easeThreshold = 0.25,                # expected absolute systematic error
+    sdmThreshold = 0.1,                  # standardized difference of means
+    equipoiseThreshold = 0.2,            # PS overlap requirement
+    attritionFractionThreshold = NULL,   # max allowed attrition
+    generalizabilitySdmThreshold = 1     # generalizability check
+)
+```
+
+## Key Sub-Objects
+
+Building a CohortMethod spec requires several helper functions. Inspect their defaults:
+
+- [`CohortMethod::createGetDbCohortMethodDataArgs()`](https://ohdsi.github.io/CohortMethod/reference/createGetDbCohortMethodDataArgs.html) -- data extraction settings
+- [`CohortMethod::createCreateStudyPopulationArgs()`](https://ohdsi.github.io/CohortMethod/reference/createCreateStudyPopulationArgs.html) -- population definition
+- [`CohortMethod::createCreatePsArgs()`](https://ohdsi.github.io/CohortMethod/reference/createCreatePsArgs.html) -- propensity score model
+- [`CohortMethod::createMatchOnPsArgs()`](https://ohdsi.github.io/CohortMethod/reference/createMatchOnPsArgs.html) -- matching settings
+- [`CohortMethod::createFitOutcomeModelArgs()`](https://ohdsi.github.io/CohortMethod/reference/createFitOutcomeModelArgs.html) -- outcome model
+- [`CohortMethod::createCmAnalysis()`](https://ohdsi.github.io/CohortMethod/reference/createCmAnalysis.html) -- ties it all together
+
+## Target-Comparator-Outcomes
+
+```r
+tcos <- CohortMethod::createTargetComparatorOutcomes(
+    targetId = 1,
+    comparatorId = 2,
+    outcomes = outcomes,
+    excludedCovariateConceptIds = c(1118084, 1124300)
+)
+```
+
+- `excludedCovariateConceptIds`: remove the target/comparator drug concepts from covariates (otherwise the PS model is trivial)
+
+## Analysis Design Pattern
+
+```r
+cmAnalysis <- CohortMethod::createCmAnalysis(
+    analysisId = 1,
+    description = "PS matching, Cox outcome model",
+    getDbCohortMethodDataArgs = ...,
+    createStudyPopArgs = ...,
+    createPsArgs = ...,
+    matchOnPsArgs = ...,
+    fitOutcomeModelArgs = ...
+)
+```
+
+Each analysis defines a complete estimation pipeline. You can define multiple analyses to compare approaches.
+
+## Summary of Key Diagnostics
+
+| Diagnostic | What it checks | Threshold |
+|------------|---------------|-----------|
+| Covariate balance (SDM) | Are groups comparable after adjustment? | < 0.1 |
+| Equipoise | Do PS distributions overlap? | > 0.2 |
+| MDRR | Is the study powered enough? | < 10 |
+| EASE | Systematic error from negative controls | < 0.25 |
+| Attrition | Did we lose too many subjects? | Study-specific |
+
+# From Here to Part 2
+
+## What You Need for Part 2
+
+Your Part 2 assignment adds CohortMethod (or SCCS) to your study specification:
+
+1. Define target-comparator-outcome combinations
+2. Configure data extraction, PS model, matching/stratification, and outcome model
+3. Set diagnostic thresholds
+4. Add `CohortMethodModule` specs to your analysis specification JSON
+
+## Design Decisions to Justify
+
+In your write-up, explain:
+
+- Why you chose your target, comparator, and outcome cohorts
+- Which covariates to exclude (the drugs being compared)
+- Matching vs stratification vs weighting
+- Outcome model type (Cox, logistic, Poisson)
+- Washout period and risk window choices
+- Any analyses you chose to exclude and why
+
+## Reference Docs
+
+- [CohortMethod package](https://ohdsi.github.io/CohortMethod/)
+- [CohortMethodModule (Strategus)](https://ohdsi.github.io/Strategus/reference/CohortMethodModule.html)
+- [Book of OHDSI Ch. 12: Population-Level Estimation](https://ohdsi.github.io/TheBookOfOhdsi/PopulationLevelEstimation.html)
+- [Creating Analysis Specification PDF](https://ohdsi.github.io/Strategus/articles/CreatingAnalysisSpecification.html)

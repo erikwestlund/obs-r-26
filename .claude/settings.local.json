@@ -4,7 +4,8 @@
       "WebSearch",
       "Bash(quarto render:*)",
       "WebFetch(domain:ohdsi.github.io)",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(Rscript:*)"
     ]
   }
 }

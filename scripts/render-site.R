@@ -34,6 +34,38 @@ for (module_dir in module_dirs) {
   system(paste("quarto render", shQuote(module_dir)))
 }
 
+# Render assignments (HTML + PDF)
+cat("\nRendering assignments (HTML + PDF)...\n")
+assignment_files <- list.files(
+  path = file.path(project_root, "assignments"),
+  pattern = "\\.qmd$",
+  full.names = TRUE,
+  recursive = FALSE
+)
+
+for (assignment_file in assignment_files) {
+  file_name <- basename(assignment_file)
+  cat("  -", file_name, "(html)\n")
+  system(paste("quarto render", shQuote(assignment_file)))
+
+  cat("  -", file_name, "(pdf)\n")
+  system(paste("quarto render", shQuote(assignment_file), "--to pdf"))
+}
+
+# Copy rendered assignments (PDF) into docs/
+cat("\nCopying assignment PDFs to docs/...\n")
+dir.create(file.path(project_root, "docs", "assignments"), recursive = TRUE, showWarnings = FALSE)
+pdf_files <- list.files(
+  path = file.path(project_root, "rendered", "assignments"),
+  pattern = "\\.pdf$",
+  full.names = TRUE
+)
+for (pdf_file in pdf_files) {
+  dest <- file.path(project_root, "docs", "assignments", basename(pdf_file))
+  file.copy(pdf_file, dest, overwrite = TRUE)
+  cat("  -", basename(pdf_file), "\n")
+}
+
 # Create .nojekyll for GitHub Pages
 file.create(file.path(project_root, "docs", ".nojekyll"))
 

@@ -1,0 +1,193 @@
+---
+title: "Strategus: Building Analysis Specifications"
+subtitle: "Session 6: Recap + GiBleed Example in Eunomia"
+format: revealjs
+---
+
+## Quick Recap
+
+Last session's core model:
+
+- Analysis specification: what to run
+- Execution settings: where/how to run
+- `execute()`: runs module pipeline in order
+
+## Today: Follow the Official Build Pattern
+
+We will mirror the "Creating Analysis Specification" workflow:
+
+1. Load cohorts and shared assets
+2. Instantiate modules
+3. Create module specifications
+4. Assemble full analysis specification JSON
+5. Optionally run on Eunomia
+
+## Why This Structure Works
+
+It keeps design and execution separate:
+
+- Design can be reviewed without database access
+- JSON can be version-controlled and diffed
+- Execution can happen later at each site
+
+# Step 1: Study Inputs
+
+## Cohorts + Shared Resources
+
+For the class example, we use Strategus test assets built around the GI bleed question.
+
+- `Cohorts.csv` + SQL cohort definitions (JSON optional)
+- No negative control outcomes required for today's workflow
+
+These become `sharedResources` in the specification.
+
+## Core Question in the Example
+
+Example framing in the guidance:
+
+- New users of celecoxib vs diclofenac
+- Outcome: GI bleed
+
+This gives us concrete IDs and module-ready assets.
+
+# Step 2: Assemble Modules
+
+## Quick Note: R6 Classes
+
+Strategus modules use **R6**, R's object-oriented class system. If you haven't seen this before, a few things to know:
+
+- You create an object with `$new()` instead of calling a plain function
+- The object has **methods** you call with `$` (like a named list)
+- Each module object is a self-contained toolkit for that analysis type
+
+This is different from most R code but the pattern is always the same.
+
+## R6 in Practice
+
+```r
+# Create an object (like a factory for that module type)
+cdModule <- CohortDiagnosticsModule$new()
+
+# Call methods on it with $
+cdModule$createModuleSpecifications(...)
+cdModule$createCohortSharedResourceSpecifications(...)
+
+# Inspect what methods are available
+ls(cdModule)
+```
+
+You never need to define your own R6 classes. Just use the ones Strategus provides.
+
+## High-Level Module Pattern
+
+For each module:
+
+1. Instantiate module object with `$new()`
+2. Call `$createModuleSpecifications(...)` to build settings
+3. Add to analysis specification
+
+## Know Your Defaults
+
+Every `createModuleSpecifications()` call has defaults. **Inspect them before accepting:**
+
+```r
+formals(cdModule$createModuleSpecifications)
+```
+
+For your assignment, you must list all parameters explicitly and annotate which are defaults vs overrides.
+
+See the [Strategus reference docs](https://ohdsi.github.io/Strategus/reference/index.html) and underlying HADES package docs ([CohortDiagnostics](https://ohdsi.github.io/CohortDiagnostics/), [CohortIncidence](https://ohdsi.github.io/CohortIncidence/), [Characterization](https://ohdsi.github.io/Characterization/)).
+
+## Modules Used in Today's Example
+
+- [`CohortGeneratorModule`](https://ohdsi.github.io/Strategus/reference/CohortGeneratorModule.html)
+- [`CohortDiagnosticsModule`](https://ohdsi.github.io/Strategus/reference/CohortDiagnosticsModule.html)
+- [`CohortIncidenceModule`](https://ohdsi.github.io/Strategus/reference/CohortIncidenceModule.html)
+- [`CharacterizationModule`](https://ohdsi.github.io/Strategus/reference/CharacterizationModule.html)
+
+This aligns directly with Part 1 assignment scope.
+
+## CohortGenerator + Diagnostics
+
+We include:
+
+- Cohort generation stats
+- Inclusion stats
+- Source concepts and orphan concepts
+- Incidence rate and cohort relationship diagnostics
+
+## Incidence + Characterization
+
+We also add:
+
+- Incidence design (targets, outcomes, TAR windows, strata)
+- Characterization settings for selected target/outcome cohorts
+
+# Step 3: Compose and Save JSON
+
+## Build the Full Analysis Specification
+
+Composition order in code:
+
+1. Add cohort shared resources
+2. Add module specs (generator, diagnostics, incidence, characterization)
+3. Save with `ParallelLogger::saveSettingsToJson()`
+
+## Scope Note for Class + Assignment
+
+For this course workflow, negative controls are optional and not required.
+
+## Deliverable Artifact
+
+Main design output:
+
+- `inst/settings/studyAnalysisSpecification.json`
+
+This is the primary object you submit for design readiness.
+
+# Step 4: Optional Execution on Eunomia
+
+## Execution Is Separate
+
+After the analysis specification is built:
+
+- Create execution settings JSON
+- Connect to Eunomia
+- Run `execute()`
+
+For assignment work, execution is optional; specification quality is required.
+
+## In-Class Script
+
+`modules/06_strategus-gibleed-demo/strategus-gibleed-demo.R`
+
+Run in sections and inspect each object as it is created.
+
+Please note that I created a project file in this directory, so you should open the project to run this code to ensure relative paths are correct.
+
+Open directly with:
+
+- `strategus-gibleed-demo.Rproj` (RStudio) or  
+- `strategus-gibleed-demo.code-workspace` (VS Code/Positron)
+
+## From Demo to Part 1 Submission
+
+Use this translation:
+
+1. Replace example cohorts with your study cohorts
+2. Keep the same module assembly pattern
+3. Save your Part 1 analysis specification JSON
+4. Include clear rationale for diagnostics/characterization/incidence choices
+
+## Part 1 Minimum Checklist
+
+Before submission, verify:
+
+1. JSON compiles and saves cleanly
+2. Cohort assets are organized and consistent
+3. Diagnostics, characterization, and incidence specs are present
+4. Repository is easy to review
+
+## Reminder on Dataset Choice
+
+Do not use GiBleed for your assignment submission. Choose a different Eunomia dataset (i.e., MIMIC or Synthea) or your own study cohort definitions.

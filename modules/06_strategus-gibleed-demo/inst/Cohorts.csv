@@ -1,0 +1,4 @@
+atlas_id,cohort_id,cohort_name,logic_description,generate_stats,sql_file,json_file
+101,101,Target - Celecoxib new users,First observed celecoxib exposure with 365 day prior observation,TRUE,sql/sql_server/101_target_celecoxib_new_users.sql,
+102,102,Comparator - Diclofenac new users,First observed diclofenac exposure with 365 day prior observation,TRUE,sql/sql_server/102_comparator_diclofenac_new_users.sql,
+201,201,Outcome - GI bleed,First observed gastrointestinal hemorrhage condition occurrence with 365 day prior observation,TRUE,sql/sql_server/201_outcome_gi_bleed.sql,

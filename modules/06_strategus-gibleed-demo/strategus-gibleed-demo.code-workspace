@@ -1,0 +1,15 @@
+{
+  "folders": [
+    {
+      "path": "."
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "**/.Rproj.user": true
+    },
+    "search.exclude": {
+      "**/demo-output": true
+    }
+  }
+}

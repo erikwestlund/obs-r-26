@@ -1,0 +1,21 @@
+{
+  "workDatabaseSchema": "main",
+  "cdmDatabaseSchema": "main",
+  "cohortTableNames": {
+    "cohortTable": "cohort",
+    "cohortSampleTable": "cohort",
+    "cohortInclusionTable": "cohort_inclusion",
+    "cohortInclusionResultTable": "cohort_inclusion_result",
+    "cohortInclusionStatsTable": "cohort_inclusion_stats",
+    "cohortSummaryStatsTable": "cohort_summary_stats",
+    "cohortCensorStatsTable": "cohort_censor_stats",
+    "cohortChecksumTable": "cohort_checksum"
+  },
+  "workFolder": "/home/erik/Projects/observational-research-methods-in-r/modules/06_strategus-gibleed-demo/demo-output/work_folder",
+  "resultsFolder": "/home/erik/Projects/observational-research-methods-in-r/modules/06_strategus-gibleed-demo/demo-output/results_folder",
+  "logFileName": "/home/erik/Projects/observational-research-methods-in-r/modules/06_strategus-gibleed-demo/demo-output/results_folder/strategus-log.txt",
+  "minCellCount": 5,
+  "incremental": true,
+  "maxCores": 32,
+  "attr_class": ["CdmExecutionSettings", "ExecutionSettings"]
+}
