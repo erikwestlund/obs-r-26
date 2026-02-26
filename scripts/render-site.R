@@ -66,6 +66,26 @@ for (pdf_file in pdf_files) {
   cat("  -", basename(pdf_file), "\n")
 }
 
+# Copy module assets that aren't rendered by Quarto (e.g., .R files)
+cat("\nCopying non-Quarto module assets to docs/...\n")
+for (module_dir in module_dirs) {
+  dir_name <- basename(module_dir)
+  asset_files <- list.files(
+    path = module_dir,
+    pattern = "\\.(R|csv|json)$",
+    full.names = TRUE,
+    recursive = FALSE
+  )
+  if (length(asset_files) > 0) {
+    dest_dir <- file.path(project_root, "docs", "modules", dir_name)
+    dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
+    for (asset_file in asset_files) {
+      file.copy(asset_file, file.path(dest_dir, basename(asset_file)), overwrite = TRUE)
+      cat("  -", file.path(dir_name, basename(asset_file)), "\n")
+    }
+  }
+}
+
 # Create .nojekyll for GitHub Pages
 file.create(file.path(project_root, "docs", ".nojekyll"))
 
