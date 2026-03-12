@@ -63,6 +63,12 @@ Propensity scores, the CohortMethodModule, and diagnostics for comparative cohor
 
 - [Slides](slides/07_cohort-method/slides.html)
 
+### Session 8: Reproducibility, Reporting, and Diagnostics
+
+renv demo projects, Strategus results review, SCCS positioning, and prespecified failure rules.
+
+- [Slides](slides/08_reporting-diagnostics-wrapup/slides.html)
+
 ## Assignments
 
 - [Strategus Study Specification Assignment (PDF)](assignments/strategus-study-specification-assignment.pdf)

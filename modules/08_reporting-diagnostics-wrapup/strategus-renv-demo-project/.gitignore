@@ -1,0 +1,16 @@
+.Rproj.user/
+.Rprofile
+.Rhistory
+.RData
+.Ruserdata
+.Rapp.history
+.Renviron
+renv/activate.R
+renv/settings.json
+renv/library/
+renv/local/
+renv/cellar/
+renv/lock/
+renv/python/
+renv/sandbox/
+renv/staging/

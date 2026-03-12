@@ -30,6 +30,18 @@ cat("\nRendering modules...\n")
 module_dirs <- list.dirs(file.path(project_root, "modules"), recursive = FALSE)
 for (module_dir in module_dirs) {
   dir_name <- basename(module_dir)
+  qmd_files <- list.files(
+    path = module_dir,
+    pattern = "\\.qmd$",
+    full.names = TRUE,
+    recursive = FALSE
+  )
+
+  if (length(qmd_files) == 0) {
+    cat("  -", dir_name, "(skipped: no qmd)\n")
+    next
+  }
+
   cat("  -", dir_name, "\n")
   system(paste("quarto render", shQuote(module_dir)))
 }
